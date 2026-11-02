@@ -295,6 +295,10 @@ const APPROVED = [
 const auth = getAuth(initializeApp(firebaseConfig));
 const $ = id => document.getElementById(id);
 
+// Internally: 1 = yellow, 2 = red.
+// The Worker/extension use the opposite numbers, so we flip on the way in and out.
+const flip = n => (n === 1 ? 2 : 1);
+
 let state = { announcement: false, announcetype: 2, announcemsg: "" };
 let dirty = false;
 let currentUser = null;
@@ -353,7 +357,7 @@ async function load() {
     const d = await res.json();
     state = {
       announcement: d.announcement === true,
-      announcetype: d.announcetype === 1 ? 1 : 2,
+      announcetype: flip(d.announcetype === 1 ? 1 : 2),
       announcemsg: typeof d.announcemsg === "string" ? d.announcemsg : ""
     };
     if (state.announcemsg === "No Text") state.announcemsg = "";
@@ -380,7 +384,7 @@ $("publishBtn").onclick = async () => {
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
       body: JSON.stringify({
         announcement: state.announcement,
-        announcetype: state.announcetype,
+        announcetype: flip(state.announcetype),
         announcemsg: state.announcemsg.trim() || "No Text"
       })
     });

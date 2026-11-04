@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wheel</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#111317; --muted:#8a8f98; --line:#e8eaee; --panel:#f6f7f9; --accent:#111317; --onaccent:#fff;
+  --font:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0e0f12;--fg:#f2f3f5;--muted:#7d838d;--line:#23262c;--panel:#16181c;--accent:#f2f3f5;--onaccent:#0e0f12}
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 22px}
+header>div{display:flex;gap:8px;flex:none}
+#title{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:inherit;font-size:22px;font-weight:650;letter-spacing:-.02em;padding:4px 6px;margin-left:-6px;border-radius:8px;text-overflow:ellipsis}
+#title:not([readonly]):hover{background:var(--panel)}
+#title[readonly]{cursor:default}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{border:1px solid var(--line);background:transparent;border-radius:999px;padding:8px 14px;font-size:14px;transition:background .15s;white-space:nowrap}
+.btn:hover{background:var(--panel)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.primary{background:var(--accent);color:var(--onaccent);border-color:var(--accent)}
+.btn:focus-visible,.spin:focus-visible,textarea:focus-visible,input:focus-visible,.slide:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+kbd{font:inherit;font-size:12px;border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--muted)}
+main{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 20px 8px}
+.stage{position:relative;width:min(100%,max(160px,calc(100vh - 190px)),640px);aspect-ratio:1}
+canvas{width:100%;height:100%;display:block;cursor:pointer}
+.pointer{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:26px solid var(--fg);filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));pointer-events:none}
+.spin{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:76px;height:76px;border-radius:50%;border:5px solid var(--bg);background:var(--accent);color:var(--onaccent);font-weight:600;font-size:15px}
+.spin:disabled{opacity:.7;cursor:default}
+footer{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-size:13px;padding:4px 0 18px}
+.nav{display:flex;align-items:center;gap:14px;color:var(--fg);font-size:14px;font-variant-numeric:tabular-nums}
+.nav .btn{width:38px;height:38px;padding:0;font-size:18px;line-height:1}
+.nav[hidden]{display:none}
+.embed header{padding:12px 16px 0}
+.embed header>div,.embed #hint{display:none}
+.embed #title{font-size:18px}
+.embed .stage{width:min(100%,max(160px,calc(100vh - 120px)))}
+.embed main{padding:8px 12px}
+.embed footer{padding-bottom:12px}
+
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(380px,100%);background:var(--bg);border-left:1px solid var(--line);padding:22px;display:flex;flex-direction:column;gap:12px;transform:translateX(100%);transition:transform .22s ease;z-index:5;overflow-y:auto}
+.drawer.open{transform:none}
+.drawer h2,.modal h2{margin:0;font-size:16px;font-weight:600}
+.drawer p,.modal p{margin:0;color:var(--muted);font-size:13px}
+textarea,input[type=text]{width:100%;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;font-size:15px}
+textarea{flex:1;min-height:140px;resize:none;line-height:1.6}
+.slides{display:flex;flex-direction:column;gap:4px;max-height:168px;overflow-y:auto}
+.slide{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:7px 8px 7px 12px;font-size:14px;cursor:pointer}
+.slide span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slide.on{border-color:var(--fg);background:var(--panel)}
+.slide button{border:0;background:transparent;color:var(--muted);font-size:16px;line-height:1;padding:2px 6px;border-radius:6px}
+.slide button:hover{color:var(--fg);background:var(--line)}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:20}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:10;padding:20px}
+.scrim.open{display:flex}
+.modal{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:24px;width:min(440px,100%);display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:8px}
+.winner{font-size:clamp(28px,7vw,44px);font-weight:700;letter-spacing:-.03em;text-align:center;padding:14px 0;word-break:break-word}
+.modal .row{justify-content:flex-end}
+.winmodal{text-align:center}
+.winmodal .row{justify-content:center}
+@media (prefers-reduced-motion:reduce){.drawer{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <input id="title" type="text" aria-label="Wheel title" maxlength="80" spellcheck="false">
+  <div>
+    <button class="btn" id="editBtn">Edit <kbd>⇧N</kbd></button>
+    <button class="btn primary" id="shareBtn">Share</button>
+  </div>
+</header>
+
+<main><div class="stage">
+  <canvas id="c" aria-label="Wheel of names"></canvas>
+  <div class="pointer"></div>
+  <button class="spin" id="spin">Spin</button>
+</div></main>
+<footer>
+  <div class="nav" id="nav" hidden>
+    <button class="btn" id="prev" aria-label="Previous wheel">‹</button>
+    <span id="count"></span>
+    <button class="btn" id="next" aria-label="Next wheel">›</button>
+  </div>
+  <span id="hint">Click the wheel or press Space to spin</span>
+</footer>
+
+<aside class="drawer" id="drawer" aria-label="Edit">
+  <h2>Slides</h2>
+  <div class="slides" id="slides"></div>
+  <div class="row"><button class="btn" id="addSlide">Add slide</button></div>
+  <div class="row"><input type="text" id="importIn" placeholder="Paste a wheel or slideshow link"><button class="btn" id="importBtn">Import</button></div>
+  <p id="importMsg">Imported wheels are added as new slides.</p>
+  <h2>Names</h2>
+  <textarea id="ta" spellcheck="false" aria-label="Names, one per line"></textarea>
+  <div class="row"><button class="btn" id="shuffle">Shuffle</button><button class="btn" id="sort">Sort</button><button class="btn primary" id="done" style="margin-left:auto">Done</button></div>
+</aside>
+
+<div class="scrim" id="shareScrim"><div class="modal" role="dialog" aria-label="Share">
+  <h2>Share this slideshow</h2>
+  <p>Link (includes every slide)</p>
+  <div class="row"><input type="text" id="link" readonly><button class="btn primary" data-copy="link">Copy</button></div>
+  <p>Embed on a website</p>
+  <div class="row"><input type="text" id="embed" readonly><button class="btn primary" data-copy="embed">Copy</button></div>
+  <div class="row"><button class="btn" id="shareClose">Close</button></div>
+</div></div>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<div class="scrim" id="winScrim"><div class="modal winmodal" role="dialog" aria-label="Winner">
+  <p>Winner</p>
+  <div class="winner" id="winner"></div>
+  <div class="row"><button class="btn" id="remove">Remove</button><button class="btn primary" id="winClose">Close</button></div>
+</div></div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var q=new URLSearchParams(location.search);
+  var EMBED=q.get('embed')==='1', CAN_EDIT=q.get('edit')!=='0';
+  if(EMBED) document.body.classList.add('embed');
+  if(q.get('theme')==='light') document.documentElement.setAttribute('data-theme','light');
+  if(!CAN_EDIT){$('editBtn').style.display='none';$('title').readOnly=true}
+  if(EMBED) $('title').readOnly=true;
+
+  var COLORS=['#4f7cff','#ff6b6b','#2fbf9b','#ffb938','#a06cff','#ff8f4f','#27b4d6','#e862a8'];
+  var DEFAULTS=['Alice','Bob','Charlie','Dana','Eli','Fay'];
+
+  function enc(s){return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+  function dec(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return decodeURIComponent(escape(atob(s)))}
+  function clean(t){return t.split('\n').map(function(x){return x.trim()}).filter(Boolean)}
+
+  // Accepts a full link or hash. #d= is a slideshow, #n= is a single wheel (older links).
+  function parse(s){
+    try{
+      var m=String(s).match(/(?:^|[#&?])(d|n)=([^&#\s]+)/);if(!m)return null;
+      var j=dec(m[2]);
+      if(m[1]==='n') return [{t:'Imported wheel',n:clean(j)}];
+      return JSON.parse(j).map(function(x){return {t:String(x[0]||'Wheel').slice(0,80),n:(x[1]||[]).map(String)}});
+    }catch(e){return null}
+  }
+  function serialize(){return enc(JSON.stringify(deck.map(function(w){return [w.t,w.n]})))}
+
+  var deck=parse(location.hash),cur=0;
+  if(!deck||!deck.length){try{deck=JSON.parse(localStorage.getItem('wheel-deck')||'null')}catch(e){}}
+  if(!deck||!deck.length) deck=[{t:'My wheel',n:DEFAULTS.slice()}];
+
+  var W=function(){return deck[cur]};
+  var cv=$('c'),ctx=cv.getContext('2d'),size=0,dpr=1,angle=0,spinning=false,winnerIdx=-1;
+  var css=function(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()};
+
+  function fit(){
+    var r=cv.getBoundingClientRect();dpr=window.devicePixelRatio||1;size=r.width;
+    if(!(size>40)) return;
+    cv.width=cv.height=Math.round(size*dpr);draw();
+  }
+  function draw(){
+    var names=W().n,s=size,r=s/2-10,c=s/2,n=names.length;
+    if(!(s>40)) return;
+    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,s,s);
+    if(!n){
+      ctx.beginPath();ctx.arc(c,c,r,0,7);ctx.fillStyle=css('--panel');ctx.fill();
+      ctx.fillStyle=css('--muted');ctx.textAlign='center';ctx.font='500 16px '+css('--font');
+      ctx.fillText('Press Shift + N to add names',c,c+90);return;
+    }
+    var seg=Math.PI*2/n;
+    for(var i=0;i<n;i++){
+      var a0=angle+i*seg;
+      ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,r,a0,a0+seg);ctx.closePath();
+      ctx.fillStyle=(n%COLORS.length===1&&i===n-1)?COLORS[3]:COLORS[i%COLORS.length];
+      ctx.fill();
+    }
+    if(n>1){
+      ctx.strokeStyle=css('--bg');ctx.lineWidth=2;
+      for(i=0;i<n;i++){var a=angle+i*seg;ctx.beginPath();ctx.moveTo(c,c);ctx.lineTo(c+r*Math.cos(a),c+r*Math.sin(a));ctx.stroke()}
+    }
+    var fs=Math.max(11,Math.min(24,r*seg*0.45,s/18));
+    ctx.font='600 '+fs+'px '+css('--font');ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.textAlign='right';
+    var maxW=r*0.62;
+    for(i=0;i<n;i++){
+      var t=names[i];
+      if(ctx.measureText(t).width>maxW){while(t.length>1&&ctx.measureText(t+'…').width>maxW)t=t.slice(0,-1);t+='…'}
+      ctx.save();ctx.translate(c,c);ctx.rotate(angle+i*seg+seg/2);ctx.fillText(t,r-18,0);ctx.restore();
+    }
+    ctx.beginPath();ctx.arc(c,c,r,0,7);ctx.strokeStyle=css('--bg');ctx.lineWidth=3;ctx.stroke();
+  }
+
+  var fx=$('fx'),fctx=fx.getContext('2d'),parts=[],fraf=0;
+  function confetti(){
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    var w=fx.width=innerWidth,h=fx.height=innerHeight;
+    for(var i=0;i<160;i++) parts.push({x:w/2+(Math.random()-.5)*w*.3,y:h*.45,vx:(Math.random()-.5)*16,vy:-Math.random()*17-4,s:7+Math.random()*7,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:COLORS[i%COLORS.length],life:0});
+    if(!fraf) fraf=requestAnimationFrame(tick);
+  }
+  function tick(){
+    fctx.clearRect(0,0,fx.width,fx.height);
+    parts=parts.filter(function(p){return p.y<fx.height+20&&p.life<280});
+    parts.forEach(function(p){
+      p.vy+=.35;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.life++;
+      fctx.save();fctx.translate(p.x,p.y);fctx.rotate(p.r);fctx.fillStyle=p.c;fctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);fctx.restore();
+    });
+    fraf=parts.length?requestAnimationFrame(tick):0;
+  }
+
+  function pick(){
+    var seg=Math.PI*2/W().n.length,th=((-Math.PI/2-angle)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+    return Math.floor(th/seg)%W().n.length;
+  }
+  function spin(){
+    if(spinning||!W().n.length) return;
+    spinning=true;$('spin').disabled=true;
+    var start=angle,total=(6+Math.random()*4)*Math.PI*2+Math.random()*Math.PI*2,dur=5200,t0=performance.now(),slide=cur;
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches) dur=800;
+    (function step(t){
+      var p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,4);
+      angle=start+total*e;draw();
+      if(p<1) requestAnimationFrame(step);
+      else{
+        spinning=false;$('spin').disabled=false;
+        if(slide!==cur) return;
+        winnerIdx=pick();$('winner').textContent=W().n[winnerIdx];$('winScrim').classList.add('open');$('winClose').focus();confetti();
+      }
+    })(t0);
+  }
+
+  function renderSlides(){
+    var box=$('slides');box.innerHTML='';
+    deck.forEach(function(w,i){
+      var d=document.createElement('div');d.className='slide'+(i===cur?' on':'');d.tabIndex=0;
+      var s=document.createElement('span');s.textContent=w.t||'Untitled';d.appendChild(s);
+      if(deck.length>1){
+        var x=document.createElement('button');x.textContent='×';x.setAttribute('aria-label','Delete '+(w.t||'slide'));
+        x.onclick=function(e){e.stopPropagation();deck.splice(i,1);if(cur>=deck.length)cur=deck.length-1;else if(i<cur)cur--;render();sync()};
+        d.appendChild(x);
+      }
+      d.onclick=function(){go(i)};
+      d.onkeydown=function(e){if(e.key==='Enter'&&e.target===d)go(i)};
+      box.appendChild(d);
+    });
+  }
+  function render(){
+    $('title').value=W().t;document.title=W().t||'Wheel';
+    var multi=deck.length>1;$('nav').hidden=!multi;
+    $('count').textContent=(cur+1)+' / '+deck.length;
+    $('ta').value=W().n.join('\n');
+    renderSlides();draw();
+  }
+  function go(i){
+    if(spinning){return}
+    cur=((i%deck.length)+deck.length)%deck.length;winnerIdx=-1;render();
+  }
+  function sync(){
+    try{localStorage.setItem('wheel-deck',JSON.stringify(deck))}catch(e){}
+    try{history.replaceState(null,'',location.pathname+location.search+'#d='+serialize())}catch(e){}
+  }
+  function openEdit(){if(!CAN_EDIT)return;render();$('drawer').classList.add('open');setTimeout(function(){$('ta').focus()},50)}
+  function closeAll(){$('drawer').classList.remove('open');$('shareScrim').classList.remove('open');$('winScrim').classList.remove('open')}
+
+  function openShare(){
+    var base=location.origin+location.pathname,h='#d='+serialize();
+    $('link').value=base+h;
+    $('embed').value='<iframe src="'+base+'?embed=1'+h+'" width="560" height="640" style="border:0;max-width:100%" loading="lazy" title="Wheel"></iframe>';
+    $('shareScrim').classList.add('open');$('link').select();
+  }
+  document.querySelectorAll('[data-copy]').forEach(function(b){
+    b.onclick=function(){
+      var el=$(b.dataset.copy);el.select();
+      var done=function(){var o=b.textContent;b.textContent='Copied';setTimeout(function(){b.textContent=o},1400)};
+      if(navigator.clipboard) navigator.clipboard.writeText(el.value).then(done,function(){document.execCommand('copy');done()});
+      else{document.execCommand('copy');done()}
+    };
+  });
+
+  $('title').addEventListener('input',function(){W().t=$('title').value;document.title=W().t||'Wheel';renderSlides();sync()});
+  $('ta').addEventListener('input',function(){W().n=clean($('ta').value);draw();sync()});
+  $('shuffle').onclick=function(){var n=W().n;for(var i=n.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=n[i];n[i]=n[j];n[j]=t}render();sync()};
+  $('sort').onclick=function(){W().n.sort(function(a,b){return a.localeCompare(b)});render();sync()};
+  $('addSlide').onclick=function(){deck.push({t:'Wheel '+(deck.length+1),n:[]});cur=deck.length-1;render();sync();$('ta').focus()};
+  $('importBtn').onclick=function(){
+    var got=parse($('importIn').value.trim());
+    if(!got||!got.length){$('importMsg').textContent='That link has no wheel in it. Paste a link made with the Share button.';return}
+    deck=deck.concat(got);cur=deck.length-got.length;$('importIn').value='';
+    $('importMsg').textContent='Added '+got.length+(got.length>1?' slides.':' slide.');
+    render();sync();
+  };
+  $('importIn').addEventListener('keydown',function(e){if(e.key==='Enter')$('importBtn').click()});
+  $('done').onclick=closeAll;
+  $('editBtn').onclick=openEdit;
+  $('shareBtn').onclick=openShare;
+  $('shareClose').onclick=closeAll;
+  $('winClose').onclick=closeAll;
+  $('remove').onclick=function(){if(winnerIdx>-1){W().n.splice(winnerIdx,1);winnerIdx=-1;render();sync()}closeAll()};
+  $('prev').onclick=function(){go(cur-1)};
+  $('next').onclick=function(){go(cur+1)};
+  $('spin').onclick=spin;
+  cv.onclick=spin;
+  ['shareScrim','winScrim'].forEach(function(id){$(id).addEventListener('click',function(e){if(e.target===this)closeAll()})});
+
+  document.addEventListener('keydown',function(e){
+    var typing=/^(TEXTAREA|INPUT)$/.test(e.target.tagName);
+    if(e.key==='Escape'){closeAll();return}
+    if(typing) return;
+    if(e.shiftKey&&e.key.toLowerCase()==='n'){e.preventDefault();openEdit()}
+    else if(e.key==='ArrowRight'){e.preventDefault();go(cur+1)}
+    else if(e.key==='ArrowLeft'){e.preventDefault();go(cur-1)}
+    else if(e.code==='Space'&&e.target.tagName!=='BUTTON'){e.preventDefault();spin()}
+  });
+  window.addEventListener('resize',fit);
+  if(window.ResizeObserver) new ResizeObserver(fit).observe(cv.parentNode);
+  window.addEventListener('hashchange',function(){var d=parse(location.hash);if(d&&d.length){deck=d;cur=0;render()}});
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);
+  render();fit();sync();
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(draw);
+})();
+</script>
+</body>
+</html>

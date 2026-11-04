@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wheel</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#111317; --muted:#8a8f98; --line:#e8eaee; --panel:#f6f7f9; --accent:#111317; --onaccent:#fff;
+  --font:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0e0f12;--fg:#f2f3f5;--muted:#7d838d;--line:#23262c;--panel:#16181c;--accent:#f2f3f5;--onaccent:#0e0f12}
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px}
+header b{font-weight:600;letter-spacing:-.01em}
+header div{display:flex;gap:8px}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{border:1px solid var(--line);background:transparent;border-radius:999px;padding:8px 14px;font-size:14px;transition:background .15s}
+.btn:hover{background:var(--panel)}
+.btn.primary{background:var(--accent);color:var(--onaccent);border-color:var(--accent)}
+.btn:focus-visible,.spin:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+kbd{font:inherit;font-size:12px;border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--muted)}
+main{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 20px 8px}
+.stage{position:relative;width:min(100%,calc(100vh - 150px),640px);aspect-ratio:1}
+canvas{width:100%;height:100%;display:block;cursor:pointer}
+.pointer{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:26px solid var(--fg);filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));pointer-events:none}
+.spin{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:76px;height:76px;border-radius:50%;border:5px solid var(--bg);background:var(--accent);color:var(--onaccent);font-weight:600;font-size:15px}
+.spin:disabled{opacity:.7;cursor:default}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:6px 0 18px}
+.embed header,.embed footer{display:none}
+.embed .stage{width:min(100%,100vh - 24px)}
+.embed main{padding:12px}
+
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(360px,100%);background:var(--bg);border-left:1px solid var(--line);padding:22px;display:flex;flex-direction:column;gap:12px;transform:translateX(100%);transition:transform .22s ease;z-index:5}
+.drawer.open{transform:none}
+.drawer h2,.modal h2{margin:0;font-size:16px;font-weight:600}
+.drawer p,.modal p{margin:0;color:var(--muted);font-size:13px}
+textarea,input[type=text]{width:100%;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;font-size:15px}
+textarea{flex:1;resize:none;line-height:1.6}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:10;padding:20px}
+.scrim.open{display:flex}
+.modal{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:24px;width:min(440px,100%);display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:8px}
+.winner{font-size:clamp(28px,7vw,44px);font-weight:700;letter-spacing:-.03em;text-align:center;padding:14px 0;word-break:break-word}
+.modal .row{justify-content:flex-end}
+.winmodal{text-align:center}
+.winmodal .row{justify-content:center}
+@media (prefers-reduced-motion:reduce){.drawer{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <b>Wheel</b>
+  <div>
+    <button class="btn" id="editBtn">Edit names <kbd>⇧N</kbd></button>
+    <button class="btn primary" id="shareBtn">Share</button>
+  </div>
+</header>
+
+<main><div class="stage">
+  <canvas id="c" aria-label="Wheel of names"></canvas>
+  <div class="pointer"></div>
+  <button class="spin" id="spin">Spin</button>
+</div></main>
+<footer>Click the wheel or press Space to spin</footer>
+
+<aside class="drawer" id="drawer" aria-label="Edit names">
+  <h2>Names</h2>
+  <p>One per line. Changes update the wheel and the share link instantly.</p>
+  <textarea id="ta" spellcheck="false"></textarea>
+  <div class="row"><button class="btn" id="shuffle">Shuffle</button><button class="btn" id="sort">Sort</button><button class="btn primary" id="done" style="margin-left:auto">Done</button></div>
+</aside>
+
+<div class="scrim" id="shareScrim"><div class="modal" role="dialog" aria-label="Share">
+  <h2>Share this wheel</h2>
+  <p>Link</p>
+  <div class="row"><input type="text" id="link" readonly><button class="btn primary" data-copy="link">Copy</button></div>
+  <p>Embed on a website</p>
+  <div class="row"><input type="text" id="embed" readonly><button class="btn primary" data-copy="embed">Copy</button></div>
+  <div class="row"><button class="btn" id="shareClose">Close</button></div>
+</div></div>
+
+<div class="scrim" id="winScrim"><div class="modal winmodal" role="dialog" aria-label="Winner">
+  <p>Winner</p>
+  <div class="winner" id="winner"></div>
+  <div class="row"><button class="btn" id="remove">Remove</button><button class="btn primary" id="winClose">Close</button></div>
+</div></div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var q=new URLSearchParams(location.search);
+  var EMBED=q.get('embed')==='1', CAN_EDIT=q.get('edit')!=='0';
+  if(EMBED) document.body.classList.add('embed');
+  if(q.get('theme')==='light'||q.get('theme')==='dark'){
+    if(q.get('theme')==='light') document.documentElement.setAttribute('data-theme','light');
+  }
+  if(!CAN_EDIT){$('editBtn').style.display='none'}
+
+  var COLORS=['#4f7cff','#ff6b6b','#2fbf9b','#ffb938','#a06cff','#ff8f4f','#27b4d6','#e862a8'];
+  var DEFAULTS=['Alice','Bob','Charlie','Dana','Eli','Fay'];
+
+  function enc(s){return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+  function dec(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return decodeURIComponent(escape(atob(s)))}
+  function clean(t){return t.split('\n').map(function(x){return x.trim()}).filter(Boolean)}
+
+  var names=null;
+  try{
+    var m=location.hash.match(/n=([^&]+)/);
+    if(m) names=clean(dec(m[1]));
+  }catch(e){}
+  if(!names||!names.length){
+    try{names=JSON.parse(localStorage.getItem('wheel-names')||'null')}catch(e){}
+  }
+  if(!names||!names.length) names=DEFAULTS.slice();
+
+  var cv=$('c'),ctx=cv.getContext('2d'),size=0,dpr=1,angle=0,spinning=false,winnerIdx=-1;
+  var css=function(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()};
+
+  function fit(){
+    var r=cv.getBoundingClientRect();dpr=window.devicePixelRatio||1;size=r.width;
+    cv.width=cv.height=Math.round(size*dpr);draw();
+  }
+  function draw(){
+    var s=size,r=s/2-10,c=s/2,n=names.length;
+    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,s,s);
+    if(!n){
+      ctx.beginPath();ctx.arc(c,c,r,0,7);ctx.fillStyle=css('--panel');ctx.fill();
+      ctx.fillStyle=css('--muted');ctx.textAlign='center';ctx.font='500 16px '+css('--font');
+      ctx.fillText('Press Shift + N to add names',c,c+90);return;
+    }
+    var seg=Math.PI*2/n;
+    for(var i=0;i<n;i++){
+      var a0=angle+i*seg,a1=a0+seg;
+      ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,r,a0,a1);ctx.closePath();
+      ctx.fillStyle=COLORS[i%COLORS.length];
+      if(n>1&&n%COLORS.length===1&&i===n-1) ctx.fillStyle=COLORS[3];
+      ctx.fill();
+    }
+    if(n>1){
+      ctx.strokeStyle=css('--bg');ctx.lineWidth=2;
+      for(i=0;i<n;i++){var a=angle+i*seg;ctx.beginPath();ctx.moveTo(c,c);ctx.lineTo(c+r*Math.cos(a),c+r*Math.sin(a));ctx.stroke()}
+    }
+    var fs=Math.max(11,Math.min(24,r*seg*0.45,s/18));
+    ctx.font='600 '+fs+'px '+css('--font');ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.textAlign='right';
+    var maxW=r*0.62;
+    for(i=0;i<n;i++){
+      var t=names[i];
+      if(ctx.measureText(t).width>maxW){while(t.length>1&&ctx.measureText(t+'…').width>maxW)t=t.slice(0,-1);t+='…'}
+      ctx.save();ctx.translate(c,c);ctx.rotate(angle+i*seg+seg/2);ctx.fillText(t,r-18,0);ctx.restore();
+    }
+    ctx.beginPath();ctx.arc(c,c,r,0,7);ctx.strokeStyle=css('--bg');ctx.lineWidth=3;ctx.stroke();
+  }
+
+  function pick(){
+    var seg=Math.PI*2/names.length,th=((-Math.PI/2-angle)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+    return Math.floor(th/seg)%names.length;
+  }
+  function spin(){
+    if(spinning||!names.length) return;
+    spinning=true;$('spin').disabled=true;
+    var start=angle,total=(6+Math.random()*4)*Math.PI*2+Math.random()*Math.PI*2,dur=5200,t0=performance.now();
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches) dur=800;
+    (function step(t){
+      var p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,4);
+      angle=start+total*e;draw();
+      if(p<1) requestAnimationFrame(step);
+      else{spinning=false;$('spin').disabled=false;winnerIdx=pick();$('winner').textContent=names[winnerIdx];$('winScrim').classList.add('open');$('winClose').focus()}
+    })(t0);
+  }
+
+  function sync(fromText){
+    try{localStorage.setItem('wheel-names',JSON.stringify(names))}catch(e){}
+    try{history.replaceState(null,'',location.pathname+location.search+'#n='+enc(names.join('\n')))}catch(e){}
+    if(!fromText) $('ta').value=names.join('\n');
+    draw();
+  }
+  function openEdit(){if(!CAN_EDIT)return;$('ta').value=names.join('\n');$('drawer').classList.add('open');setTimeout(function(){$('ta').focus()},50)}
+  function closeAll(){$('drawer').classList.remove('open');$('shareScrim').classList.remove('open');$('winScrim').classList.remove('open')}
+
+  function openShare(){
+    var base=location.origin+location.pathname,h='#n='+enc(names.join('\n'));
+    $('link').value=base+h;
+    var src=base+'?embed=1'+h;
+    $('embed').value='<iframe src="'+src+'" width="560" height="560" style="border:0;max-width:100%" loading="lazy" title="Wheel"></iframe>';
+    $('shareScrim').classList.add('open');$('link').select();
+  }
+  document.querySelectorAll('[data-copy]').forEach(function(b){
+    b.onclick=function(){
+      var el=$(b.dataset.copy);el.select();
+      var done=function(){var o=b.textContent;b.textContent='Copied';setTimeout(function(){b.textContent=o},1400)};
+      if(navigator.clipboard) navigator.clipboard.writeText(el.value).then(done,function(){document.execCommand('copy');done()});
+      else{document.execCommand('copy');done()}
+    };
+  });
+
+  $('ta').addEventListener('input',function(){names=clean($('ta').value);sync(true)});
+  $('shuffle').onclick=function(){for(var i=names.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=names[i];names[i]=names[j];names[j]=t}sync()};
+  $('sort').onclick=function(){names.sort(function(a,b){return a.localeCompare(b)});sync()};
+  $('done').onclick=closeAll;
+  $('editBtn').onclick=openEdit;
+  $('shareBtn').onclick=openShare;
+  $('shareClose').onclick=closeAll;
+  $('winClose').onclick=closeAll;
+  $('remove').onclick=function(){if(winnerIdx>-1){names.splice(winnerIdx,1);winnerIdx=-1;sync()}closeAll()};
+  $('spin').onclick=spin;
+  cv.onclick=spin;
+  ['shareScrim','winScrim'].forEach(function(id){$(id).addEventListener('click',function(e){if(e.target===this)closeAll()})});
+
+  document.addEventListener('keydown',function(e){
+    var typing=/^(TEXTAREA|INPUT)$/.test(e.target.tagName);
+    if(e.key==='Escape'){closeAll();return}
+    if(typing) return;
+    if(e.shiftKey&&e.key.toLowerCase()==='n'){e.preventDefault();openEdit()}
+    else if(e.code==='Space'&&e.target.tagName!=='BUTTON'){e.preventDefault();spin()}
+  });
+  window.addEventListener('resize',fit);
+  window.addEventListener('hashchange',function(){
+    try{var m=location.hash.match(/n=([^&]+)/);if(m){names=clean(dec(m[1]));draw()}}catch(e){}
+  });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);
+  fit();sync();
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(draw);
+})();
+</script>
+</body>
+</html>

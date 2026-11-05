@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Cafe+ | Blog</title>
+<style>
+  :root {
+    --accent: #520f2e;
+    --accent-light: #b8517f;
+    --bg: #0a0a0b;
+    --panel: #111113;
+    --border: #2a2a2e;
+    --text: #e6e6e8;
+    --muted: #8a8a92;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 48px 20px;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(82, 15, 46, 0.35), transparent 55%);
+    background-repeat: no-repeat;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    box-shadow: 0 0 0 1px #000, 0 20px 60px rgba(0, 0, 0, 0.6);
+  }
+
+  header {
+    padding: 36px 32px 28px;
+    border-bottom: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    position: relative;
+  }
+
+  .version {
+    display: inline-block;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--accent-light);
+    border: 1px solid var(--accent);
+    background: rgba(82, 15, 46, 0.25);
+    padding: 3px 10px;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  h1 span { color: var(--accent-light); }
+
+  .subtitle {
+    color: var(--muted);
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 12px;
+  }
+
+  .steps { list-style: none; counter-reset: step; }
+
+  .step {
+    counter-increment: step;
+    display: flex;
+    gap: 20px;
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s ease;
+  }
+
+  .step:hover { background: rgba(82, 15, 46, 0.12); }
+
+  .step::before {
+    content: counter(step, decimal-leading-zero);
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    font-family: ui-monospace, Consolas, monospace;
+    font-weight: 700;
+    color: #fff;
+    background: var(--accent);
+    border: 1px solid var(--accent-light);
+  }
+
+  .step h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .step p { color: var(--muted); font-size: 0.95rem; }
+
+  code {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 0.88rem;
+    color: var(--accent-light);
+    background: #0a0a0b;
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    word-break: break-all;
+  }
+
+  .btn {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 10px 22px;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    border: 1px solid var(--accent-light);
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+  }
+
+  .btn:hover {
+    background: var(--accent-light);
+    color: #000;
+  }
+
+  .final {
+    padding: 28px 32px;
+    text-align: center;
+    background: rgba(82, 15, 46, 0.18);
+  }
+
+  .final p { color: var(--muted); margin-bottom: 12px; }
+
+  footer {
+    text-align: center;
+    padding: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, Consolas, monospace;
+  }
+
+  @media (max-width: 520px) {
+    .step { padding: 20px; gap: 14px; }
+    header { padding: 28px 20px 22px; }
+    .final { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <div class="version">V1.1.0 Update</div>
+      <h1>Student <span>Cafe+</span>!</h1>
+      <div class="subtitle">Blog - The Final Update</div>
+    </header>
+
+    <ol class="steps">
+      <li class="step">
+        <div>
+          <h2>Welcome</h2>
+          <p>Dear Beta Tester, We (I) have decided that the next update you will get will be the last before we (I)... <strong>SHOW TO THE SCHOOL!</strong>So I am asking for your help!
+          I need suggestions on what to add and to make this as polished as possible. Right now we (I) am working on: Canvas Intergration, Custom Themes (Bata testers get better ones, Making it an app on your phone
+          and on mac, Fixing PDF Viewer and more! So please suggest below!</p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="final">
+      <p>Forum</p>
+      <a class="btn" href="https://forms.cloud.microsoft/r/0n0UKkwq5M">Microsoft Forum</a>
+    </div>
+
+    <footer>Student Cafe+</footer>
+  </main>
+</body>
+</html>

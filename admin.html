@@ -117,6 +117,7 @@
   .type-opt:hover { transform: translateY(-2px); background: rgba(82,15,46,.15); }
   .type-opt[data-type="1"].sel { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--yellow) inset, 0 6px 24px rgba(224,176,80,.12); }
   .type-opt[data-type="2"].sel { border-color: var(--red); box-shadow: 0 0 0 1px var(--red) inset, 0 6px 24px rgba(224,85,106,.14); }
+    .type-opt[data-type="3"].sel { border-color: var(--accent-light); box-shadow: 0 0 0 1px var(--accent-light) inset, 0 6px 24px rgba(184,81,127,.18); }
 
   /* preview */
   .preview {
@@ -126,6 +127,7 @@
   }
   .preview.t1 { border-left: 4px solid var(--yellow); background: rgba(224,176,80,.08); color: #f0d48a; }
   .preview.t2 { border-left: 6px solid var(--red); background: rgba(224,85,106,.12); color: #ff9aa9; font-weight: 700; font-size: 1.12rem; }
+    .preview.t3 { border-left: 4px solid var(--accent-light); background: rgba(184,81,127,.1); color: #e8b3cc; text-align: center; font-weight: 600; }
   .preview.hidden { opacity: .4; border-style: dashed; }
   .preview .flag { display: block; font-family: ui-monospace, Consolas, monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; opacity: .7; margin-bottom: 4px; font-weight: 400; }
 
@@ -237,6 +239,7 @@
         <div class="types">
           <button class="type-opt" data-type="1" type="button"><b>Basic Yellow</b><small>Small, gentle heads-up</small></button>
           <button class="type-opt" data-type="2" type="button"><b>Big Important Red</b><small>Hard to miss</small></button>
+          <button class="type-opt" data-type="3" type="button"><b>Popup</b><small>Shows on Home each time it loads</small></button>
         </div>
       </div>
     </div>
@@ -297,7 +300,7 @@ const $ = id => document.getElementById(id);
 
 // Internally: 1 = yellow, 2 = red.
 // The Worker/extension use the opposite numbers, so we flip on the way in and out.
-const flip = n => (n === 1 ? 2 : 1);
+const flip = n => (n === 1 ? 2 : n === 2 ? 1 : n);
 
 let state = { announcement: false, announcetype: 2, announcemsg: "" };
 let dirty = false;
@@ -357,7 +360,7 @@ async function load() {
     const d = await res.json();
     state = {
       announcement: d.announcement === true,
-      announcetype: flip(d.announcetype === 1 ? 1 : 2),
+      announcetype: flip([1, 2, 3].includes(d.announcetype) ? d.announcetype : 2),
       announcemsg: typeof d.announcemsg === "string" ? d.announcemsg : ""
     };
     if (state.announcemsg === "No Text") state.announcemsg = "";

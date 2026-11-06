@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Cafe+ | Admin</title>
+<style>
+  :root {
+    --accent: #520f2e;
+    --accent-light: #b8517f;
+    --bg: #0a0a0b;
+    --panel: #111113;
+    --border: #2a2a2e;
+    --text: #e6e6e8;
+    --muted: #8a8a92;
+    --yellow: #e0b050;
+    --red: #e0556a;
+    --ease: cubic-bezier(.22,.8,.3,1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 48px 20px;
+    background-image: radial-gradient(circle at 50% 0%, rgba(82,15,46,.35), transparent 55%);
+    background-repeat: no-repeat;
+  }
+
+  .container {
+    max-width: 720px; margin: 0 auto;
+    border: 1px solid var(--border); background: var(--panel);
+    box-shadow: 0 0 0 1px #000, 0 20px 60px rgba(0,0,0,.6);
+    animation: rise .7s var(--ease) both;
+  }
+  @keyframes rise { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:none; } }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(184,81,127,.55); } 50% { box-shadow:0 0 0 8px rgba(184,81,127,0); } }
+
+  header {
+    padding: 36px 32px 28px; border-bottom: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap;
+  }
+  .version {
+    display: inline-block; font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 12px; letter-spacing: 1px; color: var(--accent-light);
+    border: 1px solid var(--accent); background: rgba(82,15,46,.25);
+    padding: 3px 10px; margin-bottom: 16px;
+  }
+  h1 { font-size: 2rem; font-weight: 700; letter-spacing: -.5px; }
+  h1 span { color: var(--accent-light); }
+  .subtitle { color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 3px; font-size: 12px; }
+
+  .user { text-align: right; font-size: 12px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; }
+  .user b { display: block; color: var(--text); font-weight: 600; word-break: break-all; }
+
+  .view { display: none; }
+  .view.active { display: block; animation: fadeIn .5s var(--ease) both; }
+
+  .block {
+    display: flex; gap: 20px; padding: 24px 32px;
+    border-bottom: 1px solid var(--border); transition: background .2s ease;
+  }
+  .block:hover { background: rgba(82,15,46,.12); }
+  .num {
+    flex-shrink: 0; width: 44px; height: 44px; display: grid; place-items: center;
+    font-family: ui-monospace, Consolas, monospace; font-weight: 700; color: #fff;
+    background: var(--accent); border: 1px solid var(--accent-light);
+    transition: transform .3s var(--ease);
+  }
+  .block:hover .num { transform: rotate(-4deg) scale(1.06); }
+  .block > div:last-child { flex: 1; min-width: 0; }
+  .block h2 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+  .desc { color: var(--muted); font-size: .95rem; }
+
+  label.cap { display: block; margin-top: 18px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+  textarea {
+    width: 100%; margin-top: 6px; padding: 10px 12px; min-height: 100px; resize: vertical;
+    background: #0a0a0b; color: var(--text); border: 1px solid var(--border);
+    font: inherit; font-size: .95rem; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  textarea:focus { border-color: var(--accent-light); box-shadow: 0 0 0 3px rgba(184,81,127,.18); }
+  .count { text-align: right; font-size: 11px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; margin-top: 4px; }
+
+  /* toggle switch */
+  .switch-row { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+  .switch { position: relative; width: 52px; height: 28px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0; cursor: pointer; background: #0a0a0b;
+    border: 1px solid var(--border); transition: all .3s var(--ease);
+  }
+  .slider::before {
+    content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px;
+    background: var(--muted); transition: all .3s var(--ease);
+  }
+  .switch input:checked + .slider { background: var(--accent); border-color: var(--accent-light); }
+  .switch input:checked + .slider::before { transform: translateX(24px); background: #fff; }
+  .switch input:focus-visible + .slider { box-shadow: 0 0 0 3px rgba(184,81,127,.3); }
+  #switchText { font-family: ui-monospace, Consolas, monospace; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); transition: color .3s; }
+  #switchText.on { color: var(--accent-light); }
+
+  /* type picker */
+  .types { display: flex; gap: 12px; margin-top: 6px; }
+  .type-opt {
+    flex: 1; padding: 14px; text-align: left; cursor: pointer; font-family: inherit; color: var(--text);
+    background: #0a0a0b; border: 1px solid var(--border); border-left: 3px solid var(--border);
+    transition: all .25s var(--ease);
+  }
+  .type-opt small { display: block; color: var(--muted); font-size: 12px; }
+  .type-opt b { font-size: .92rem; }
+  .type-opt:hover { transform: translateY(-2px); background: rgba(82,15,46,.15); }
+  .type-opt[data-type="1"].sel { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--yellow) inset, 0 6px 24px rgba(224,176,80,.12); }
+  .type-opt[data-type="2"].sel { border-color: var(--red); box-shadow: 0 0 0 1px var(--red) inset, 0 6px 24px rgba(224,85,106,.14); }
+
+  /* preview */
+  .preview {
+    margin-top: 6px; padding: 16px 18px; border: 1px solid var(--border);
+    background: #0a0a0b; min-height: 64px; transition: all .35s var(--ease);
+    word-break: break-word; white-space: pre-wrap;
+  }
+  .preview.t1 { border-left: 4px solid var(--yellow); background: rgba(224,176,80,.08); color: #f0d48a; }
+  .preview.t2 { border-left: 6px solid var(--red); background: rgba(224,85,106,.12); color: #ff9aa9; font-weight: 700; font-size: 1.12rem; }
+  .preview.hidden { opacity: .4; border-style: dashed; }
+  .preview .flag { display: block; font-family: ui-monospace, Consolas, monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; opacity: .7; margin-bottom: 4px; font-weight: 400; }
+
+  .btn {
+    display: inline-block; margin-top: 14px; padding: 10px 22px;
+    background: var(--accent); color: #fff; border: 1px solid var(--accent-light);
+    font-weight: 600; letter-spacing: 1px; text-transform: uppercase; font-size: .8rem;
+    cursor: pointer; font-family: inherit; transition: all .2s ease, transform .15s;
+  }
+  .btn:hover { background: var(--accent-light); color: #000; transform: translateY(-1px); }
+  .btn:active { transform: translateY(1px) scale(.98); }
+  .btn.ghost { background: transparent; border-color: var(--border); color: var(--muted); margin-left: 8px; }
+  .btn.ghost:hover { border-color: var(--accent-light); color: var(--text); background: rgba(82,15,46,.25); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; background: var(--accent); color: #fff; }
+  .btn.dirty { animation: pulse 1.8s infinite; }
+
+  .mini {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    padding: 4px 10px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+    font-family: ui-monospace, Consolas, monospace; transition: all .2s;
+  }
+  .mini:hover { border-color: var(--accent-light); color: var(--text); background: rgba(82,15,46,.3); }
+
+  /* theme access */
+  .tu-row { display: flex; gap: 8px; margin-top: 14px; align-items: stretch; }
+  .tu-row input {
+    flex: 1; min-width: 0; padding: 9px 12px; background: #0a0a0b; color: var(--text);
+    border: 1px solid var(--border); font: inherit; font-size: .95rem; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .tu-row input:focus { border-color: var(--accent-light); box-shadow: 0 0 0 3px rgba(184,81,127,.18); }
+  .tu-row .btn { margin-top: 0; }
+  .tu-list { list-style: none; margin-top: 12px; }
+  .tu-list li {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 8px 12px; border: 1px solid var(--border); margin-top: 6px; background: #0a0a0b;
+    font-size: .92rem; word-break: break-word;
+  }
+  .tu-list li.empty { border: 0; background: none; color: var(--muted); padding-left: 0; }
+  .tu-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  #tuStatus { margin-top: 14px; font-size: .85rem; color: var(--muted); }
+
+  .final { padding: 28px 32px; text-align: center; background: rgba(82,15,46,.18); }
+  .final p { color: var(--muted); }
+
+  .center { padding: 56px 32px; text-align: center; }
+  .center .icon { font-size: 40px; margin-bottom: 14px; }
+  .center p { color: var(--muted); margin-top: 6px; }
+  .err { color: var(--red); font-size: 13px; margin-top: 14px; min-height: 18px; }
+
+  footer {
+    text-align: center; padding: 14px; border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--muted); font-family: ui-monospace, Consolas, monospace;
+  }
+
+  #toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translate(-50%, 30px);
+    background: var(--panel); border: 1px solid var(--accent-light); color: var(--text);
+    padding: 10px 22px; font-size: 13px; opacity: 0; pointer-events: none;
+    transition: all .35s var(--ease); box-shadow: 0 10px 40px rgba(0,0,0,.6);
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  #toast.bad { border-color: var(--red); }
+
+  @media (max-width: 520px) {
+    .block { padding: 20px; gap: 14px; }
+    header { padding: 28px 20px 22px; }
+    .types { flex-direction: column; }
+    .final { padding: 24px 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<main class="container">
+  <header>
+    <div>
+      <div class="version">ADMIN</div>
+      <h1>Student <span>Cafe+</span> Admin</h1>
+      <div class="subtitle">Announcements &amp; themes</div>
+    </div>
+    <div class="user" id="userBox" style="display:none">
+      Signed in as<b id="userEmail"></b>
+      <button class="mini" id="signoutBtn" style="margin-top:8px">Sign out</button>
+    </div>
+  </header>
+
+  <section class="view active" id="loginView">
+    <div class="center">
+      <div class="icon">🔐</div>
+      <h2>Restricted area</h2>
+      <p>Sign in with an approved Google account to continue.</p>
+      <button class="btn" id="googleBtn">Sign in with Google</button>
+      <div class="err" id="error"></div>
+    </div>
+  </section>
+
+  <section class="view" id="deniedView">
+    <div class="center">
+      <div class="icon">⛔</div>
+      <h2>Access denied</h2>
+      <p id="deniedMsg"></p>
+      <button class="btn" id="deniedSignout">Sign out</button>
+    </div>
+  </section>
+
+  <section class="view" id="dashView">
+    <div class="block">
+      <div class="num">01</div>
+      <div>
+        <h2>Visibility</h2>
+        <p class="desc">Turn the announcement on or off for everyone using the extension.</p>
+        <div class="switch-row">
+          <label class="switch">
+            <input type="checkbox" id="fActive">
+            <span class="slider"></span>
+          </label>
+          <span id="switchText">Hidden</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="num">02</div>
+      <div>
+        <h2>Style</h2>
+        <p class="desc">Pick how it shows up.</p>
+        <div class="types">
+          <button class="type-opt" data-type="1" type="button"><b>Basic Yellow</b><small>Small, gentle heads-up</small></button>
+          <button class="type-opt" data-type="2" type="button"><b>Big Important Red</b><small>Hard to miss</small></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="num">03</div>
+      <div>
+        <h2>Message</h2>
+        <p class="desc">What do students need to know?</p>
+        <label class="cap" for="fMsg">Announcement text</label>
+        <textarea id="fMsg" maxlength="500" placeholder="Type your announcement here..."></textarea>
+        <div class="count"><span id="cnt">0</span> / 500</div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="num">04</div>
+      <div>
+        <h2>Preview</h2>
+        <p class="desc">Roughly how it will look.</p>
+        <div class="preview" id="preview"></div>
+      </div>
+    </div>
+
+    <div class="final">
+      <p id="status">Loading...</p>
+      <button class="btn" id="publishBtn" disabled>Publish changes</button>
+      <button class="btn ghost" id="reloadBtn">Discard &amp; reload</button>
+    </div>
+
+    <div class="block" style="border-top:1px solid var(--border)">
+      <div class="num">05</div>
+      <div>
+        <h2>Theme access</h2>
+        <p class="desc">Students on this list can use the custom themes (Retro, Sunset, Hacker, Cyberpunk, Synthwave). Type the name exactly as it shows in the top-right of Student Cafe. Capitals and punctuation don't matter, but word order does.</p>
+        <div class="tu-row">
+          <input id="tuName" placeholder="Student name as shown on the portal" maxlength="80" autocomplete="off">
+          <button class="btn" id="tuAdd" type="button">Add</button>
+        </div>
+        <ul class="tu-list" id="tuList"></ul>
+        <div class="tu-foot">
+          <button class="btn" id="tuSave" type="button" disabled>Save theme access</button>
+          <span id="tuStatus">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Student Cafe+ // admin</footer>
+</main>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+  from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBTqtQhMGwIpHA70Ft_23OWQxb-Wy6cd3I",
+  authDomain: "chevalier-collage.firebaseapp.com",
+  projectId: "chevalier-collage",
+  storageBucket: "chevalier-collage.firebasestorage.app",
+  messagingSenderId: "924873128628",
+  appId: "1:924873128628:web:6ec41cdd9b079bb53235e1"
+};
+
+const WORKER_URL = "https://throbbing-sunset-4c33.ryotubers.workers.dev/";   // announcements
+const THEMES_URL = "https://broad-cell-824d.ryotubers.workers.dev/";          // theme access list
+const APPROVED = [
+  "ryotubers@gmail.com",
+  "aw101007@students.chevalier.nsw.edu.au"
+];
+
+const auth = getAuth(initializeApp(firebaseConfig));
+const $ = id => document.getElementById(id);
+
+// Internally: 1 = yellow, 2 = red.
+// The Worker/extension use the opposite numbers, so we flip on the way in and out.
+const flip = n => (n === 1 ? 2 : 1);
+
+let state = { announcement: false, announcetype: 2, announcemsg: "" };
+let dirty = false;
+let currentUser = null;
+
+function show(view) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  $(view).classList.add("active");
+}
+
+function toast(msg, bad = false) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.toggle("bad", bad);
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+function setDirty(v) {
+  dirty = v;
+  $("publishBtn").disabled = !v;
+  $("publishBtn").classList.toggle("dirty", v);
+  $("status").textContent = v ? "You have unpublished changes." : "Everything is published.";
+}
+
+function refresh() {
+  $("fActive").checked = state.announcement;
+  $("switchText").textContent = state.announcement ? "Live" : "Hidden";
+  $("switchText").classList.toggle("on", state.announcement);
+
+  document.querySelectorAll(".type-opt").forEach(b =>
+    b.classList.toggle("sel", Number(b.dataset.type) === state.announcetype));
+
+  if ($("fMsg").value !== state.announcemsg) $("fMsg").value = state.announcemsg;
+  $("cnt").textContent = state.announcemsg.length;
+
+  const p = $("preview");
+  p.className = "preview t" + state.announcetype + (state.announcement ? "" : " hidden");
+  p.textContent = "";
+  const flag = document.createElement("span");
+  flag.className = "flag";
+  flag.textContent = state.announcement ? "Live" : "Hidden (not shown to users)";
+  p.append(flag, document.createTextNode(state.announcemsg || "Your message will appear here."));
+}
+
+$("fActive").onchange = e => { state.announcement = e.target.checked; setDirty(true); refresh(); };
+document.querySelectorAll(".type-opt").forEach(b =>
+  b.onclick = () => { state.announcetype = Number(b.dataset.type); setDirty(true); refresh(); });
+$("fMsg").oninput = e => { state.announcemsg = e.target.value; setDirty(true); refresh(); };
+
+async function load() {
+  $("status").textContent = "Loading...";
+  try {
+    const res = await fetch(WORKER_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const d = await res.json();
+    state = {
+      announcement: d.announcement === true,
+      announcetype: flip(d.announcetype === 1 ? 1 : 2),
+      announcemsg: typeof d.announcemsg === "string" ? d.announcemsg : ""
+    };
+    if (state.announcemsg === "No Text") state.announcemsg = "";
+    setDirty(false); refresh();
+  } catch (e) {
+    toast("Couldn't load: " + e.message, true);
+    $("status").textContent = "Load failed.";
+  }
+}
+
+$("reloadBtn").onclick = () => {
+  if (dirty && !confirm("Discard unpublished changes?")) return;
+  load();
+};
+
+$("publishBtn").onclick = async () => {
+  const btn = $("publishBtn");
+  if (state.announcement && !state.announcemsg.trim()) return toast("Write a message first.", true);
+  btn.disabled = true; btn.textContent = "Publishing...";
+  try {
+    const token = await currentUser.getIdToken(true);
+    const res = await fetch(WORKER_URL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({
+        announcement: state.announcement,
+        announcetype: flip(state.announcetype),
+        announcemsg: state.announcemsg.trim() || "No Text"
+      })
+    });
+    if (!res.ok) throw new Error((await res.text()) || "HTTP " + res.status);
+    setDirty(false);
+    toast("Published!");
+  } catch (e) {
+    toast("Publish failed: " + e.message, true);
+    btn.disabled = false;
+  }
+  btn.textContent = "Publish changes";
+};
+
+/* ---------------- Theme access list ---------------- */
+// Must match the normalisation + hashing in the userscript (apHash).
+const tuNorm = s => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+async function tuHash(s) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(tuNorm(s)));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+let tuUsers = [];
+let tuDirty = false;
+
+function tuSetDirty(v) {
+  tuDirty = v;
+  $("tuSave").disabled = !v;
+  $("tuStatus").textContent = v ? "You have unsaved changes." : "Everything is saved.";
+}
+
+function tuRender() {
+  const ul = $("tuList");
+  ul.textContent = "";
+  if (!tuUsers.length) {
+    const li = document.createElement("li");
+    li.className = "empty";
+    li.textContent = "Nobody on the list yet.";
+    ul.append(li);
+    return;
+  }
+  tuUsers.forEach((u, i) => {
+    const li = document.createElement("li");
+    const span = document.createElement("span");
+    span.textContent = u.name;
+    const rm = document.createElement("button");
+    rm.className = "mini"; rm.type = "button"; rm.textContent = "Remove";
+    rm.onclick = () => { tuUsers.splice(i, 1); tuSetDirty(true); tuRender(); };
+    li.append(span, rm);
+    ul.append(li);
+  });
+}
+
+async function tuLoad() {
+  $("tuStatus").textContent = "Loading...";
+  try {
+    const token = await currentUser.getIdToken();
+    const res = await fetch(THEMES_URL, {
+      headers: { "Authorization": "Bearer " + token },
+      cache: "no-store"
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const d = await res.json();
+    tuUsers = Array.isArray(d.users) ? d.users : [];
+    tuSetDirty(false); tuRender();
+  } catch (e) {
+    toast("Couldn't load theme list: " + e.message, true);
+    $("tuStatus").textContent = "Load failed.";
+  }
+}
+
+$("tuAdd").onclick = async () => {
+  const name = $("tuName").value.trim();
+  if (!tuNorm(name)) return toast("Enter a name first.", true);
+  const hash = await tuHash(name);
+  if (tuUsers.some(u => u.hash === hash)) return toast("Already on the list.", true);
+  tuUsers.push({ name, hash });
+  $("tuName").value = "";
+  tuSetDirty(true); tuRender();
+};
+$("tuName").addEventListener("keydown", e => { if (e.key === "Enter") $("tuAdd").click(); });
+
+$("tuSave").onclick = async () => {
+  const btn = $("tuSave");
+  btn.disabled = true; btn.textContent = "Saving...";
+  try {
+    const token = await currentUser.getIdToken(true);
+    const res = await fetch(THEMES_URL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({ users: tuUsers })
+    });
+    if (!res.ok) throw new Error((await res.text()) || "HTTP " + res.status);
+    tuSetDirty(false);
+    toast("Theme access saved!");
+  } catch (e) {
+    toast("Save failed: " + e.message, true);
+    btn.disabled = false;
+  }
+  btn.textContent = "Save theme access";
+};
+
+window.addEventListener("beforeunload", e => { if (dirty || tuDirty) { e.preventDefault(); e.returnValue = ""; } });
+
+$("googleBtn").onclick = async () => {
+  $("error").textContent = "";
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (err) { $("error").textContent = err.message; }
+};
+$("signoutBtn").onclick = $("deniedSignout").onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  if (!user) { $("userBox").style.display = "none"; show("loginView"); return; }
+  $("userBox").style.display = "block";
+  $("userEmail").textContent = user.email;
+  if (APPROVED.includes((user.email || "").toLowerCase())) {
+    show("dashView"); refresh(); load(); tuLoad();
+  } else {
+    $("deniedMsg").textContent = `${user.email} isn't on the approved list.`;
+    show("deniedView");
+  }
+});
+</script>
+</body>
+</html>

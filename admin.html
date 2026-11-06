@@ -117,7 +117,7 @@
   .type-opt:hover { transform: translateY(-2px); background: rgba(82,15,46,.15); }
   .type-opt[data-type="1"].sel { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--yellow) inset, 0 6px 24px rgba(224,176,80,.12); }
   .type-opt[data-type="2"].sel { border-color: var(--red); box-shadow: 0 0 0 1px var(--red) inset, 0 6px 24px rgba(224,85,106,.14); }
-    .type-opt[data-type="3"].sel { border-color: var(--accent-light); box-shadow: 0 0 0 1px var(--accent-light) inset, 0 6px 24px rgba(184,81,127,.18); }
+  .type-opt[data-type="3"].sel { border-color: var(--accent-light); box-shadow: 0 0 0 1px var(--accent-light) inset, 0 6px 24px rgba(184,81,127,.18); }
 
   /* preview */
   .preview {
@@ -127,7 +127,7 @@
   }
   .preview.t1 { border-left: 4px solid var(--yellow); background: rgba(224,176,80,.08); color: #f0d48a; }
   .preview.t2 { border-left: 6px solid var(--red); background: rgba(224,85,106,.12); color: #ff9aa9; font-weight: 700; font-size: 1.12rem; }
-    .preview.t3 { border-left: 4px solid var(--accent-light); background: rgba(184,81,127,.1); color: #e8b3cc; text-align: center; font-weight: 600; }
+  .preview.t3 { border-left: 4px solid var(--accent-light); background: rgba(184,81,127,.1); color: #e8b3cc; text-align: center; font-weight: 600; }
   .preview.hidden { opacity: .4; border-style: dashed; }
   .preview .flag { display: block; font-family: ui-monospace, Consolas, monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; opacity: .7; margin-bottom: 4px; font-weight: 400; }
 
@@ -163,6 +163,20 @@
     text-align: center; padding: 14px; border-top: 1px solid var(--border);
     font-size: 12px; color: var(--muted); font-family: ui-monospace, Consolas, monospace;
   }
+
+  /* popup preview modal */
+  .modal-back {
+    position: fixed; inset: 0; z-index: 50; display: none; place-items: center;
+    background: rgba(0,0,0,.72); padding: 20px; animation: fadeIn .25s var(--ease) both;
+  }
+  .modal-back.show { display: grid; }
+  .modal {
+    width: 100%; max-width: 420px; padding: 28px 26px 22px; text-align: center;
+    background: var(--panel); border: 1px solid var(--accent-light); border-top: 4px solid var(--accent-light);
+    box-shadow: 0 20px 60px rgba(0,0,0,.7); animation: rise .4s var(--ease) both;
+  }
+  .modal .flag { font-family: ui-monospace, Consolas, monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent-light); }
+  .modal p { margin: 12px 0 4px; white-space: pre-wrap; word-break: break-word; }
 
   #toast {
     position: fixed; bottom: 28px; left: 50%; transform: translate(-50%, 30px);
@@ -261,6 +275,7 @@
         <h2>Preview</h2>
         <p class="desc">Roughly how it will look.</p>
         <div class="preview" id="preview"></div>
+        <button class="mini" id="popupPreviewBtn" type="button" style="margin-top:12px;display:none">Preview popup</button>
       </div>
     </div>
 
@@ -273,6 +288,14 @@
 
   <footer>Student Cafe+ // admin</footer>
 </main>
+
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <span class="flag">Announcement</span>
+    <p id="modalMsg"></p>
+    <button class="btn" id="modalClose" type="button">Got it</button>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script type="module">
@@ -298,8 +321,9 @@ const APPROVED = [
 const auth = getAuth(initializeApp(firebaseConfig));
 const $ = id => document.getElementById(id);
 
-// Internally: 1 = yellow, 2 = red.
-// The Worker/extension use the opposite numbers, so we flip on the way in and out.
+// Internally: 1 = yellow, 2 = red, 3 = popup.
+// The Worker/extension use the opposite numbers for yellow/red, so we flip those on the way in and out.
+// Popup (3) is the same everywhere.
 const flip = n => (n === 1 ? 2 : n === 2 ? 1 : n);
 
 let state = { announcement: false, announcetype: 2, announcemsg: "" };
@@ -345,12 +369,21 @@ function refresh() {
   flag.className = "flag";
   flag.textContent = state.announcement ? "Live" : "Hidden (not shown to users)";
   p.append(flag, document.createTextNode(state.announcemsg || "Your message will appear here."));
+
+  $("popupPreviewBtn").style.display = state.announcetype === 3 ? "inline-block" : "none";
 }
 
 $("fActive").onchange = e => { state.announcement = e.target.checked; setDirty(true); refresh(); };
 document.querySelectorAll(".type-opt").forEach(b =>
   b.onclick = () => { state.announcetype = Number(b.dataset.type); setDirty(true); refresh(); });
 $("fMsg").oninput = e => { state.announcemsg = e.target.value; setDirty(true); refresh(); };
+
+$("popupPreviewBtn").onclick = () => {
+  $("modalMsg").textContent = state.announcemsg || "Your message will appear here.";
+  $("modalBack").classList.add("show");
+};
+$("modalClose").onclick = () => $("modalBack").classList.remove("show");
+$("modalBack").onclick = e => { if (e.target === $("modalBack")) $("modalBack").classList.remove("show"); };
 
 async function load() {
   $("status").textContent = "Loading...";

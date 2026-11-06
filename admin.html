@@ -1,420 +1,1180 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Cafe+ | Admin</title>
+
 <style>
-  :root {
-    --accent: #520f2e;
-    --accent-light: #b8517f;
-    --bg: #0a0a0b;
-    --panel: #111113;
-    --border: #2a2a2e;
-    --text: #e6e6e8;
-    --muted: #8a8a92;
-    --yellow: #e0b050;
-    --red: #e0556a;
-    --ease: cubic-bezier(.22,.8,.3,1);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-    line-height: 1.6;
+:root {
+    --maroon: #520f2e;
+    --cream: #f2f2eb;
+    --background: #0c0c0f;
+    --panel: #17171c;
+    --muted: #9999a5;
+}
+
+body {
+    margin: 0;
     min-height: 100vh;
-    padding: 48px 20px;
-    background-image: radial-gradient(circle at 50% 0%, rgba(82,15,46,.35), transparent 55%);
-    background-repeat: no-repeat;
-  }
+    background: var(--background);
+    color: white;
+}
 
-  .container {
-    max-width: 720px; margin: 0 auto;
-    border: 1px solid var(--border); background: var(--panel);
-    box-shadow: 0 0 0 1px #000, 0 20px 60px rgba(0,0,0,.6);
-    animation: rise .7s var(--ease) both;
-  }
-  @keyframes rise { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:none; } }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-  @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(184,81,127,.55); } 50% { box-shadow:0 0 0 8px rgba(184,81,127,0); } }
+button, input, textarea {
+    font: inherit;
+}
 
-  header {
-    padding: 36px 32px 28px; border-bottom: 1px solid var(--border);
-    border-top: 3px solid var(--accent);
-    display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap;
-  }
-  .version {
-    display: inline-block; font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
-    font-size: 12px; letter-spacing: 1px; color: var(--accent-light);
-    border: 1px solid var(--accent); background: rgba(82,15,46,.25);
-    padding: 3px 10px; margin-bottom: 16px;
-  }
-  h1 { font-size: 2rem; font-weight: 700; letter-spacing: -.5px; }
-  h1 span { color: var(--accent-light); }
-  .subtitle { color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 3px; font-size: 12px; }
+button {
+    cursor: pointer;
+}
 
-  .user { text-align: right; font-size: 12px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; }
-  .user b { display: block; color: var(--text); font-weight: 600; word-break: break-all; }
+.hidden {
+    display: none !important;
+}
 
-  .view { display: none; }
-  .view.active { display: block; animation: fadeIn .5s var(--ease) both; }
+/* LOGIN */
 
-  .block {
-    display: flex; gap: 20px; padding: 24px 32px;
-    border-bottom: 1px solid var(--border); transition: background .2s ease;
-  }
-  .block:hover { background: rgba(82,15,46,.12); }
-  .num {
-    flex-shrink: 0; width: 44px; height: 44px; display: grid; place-items: center;
-    font-family: ui-monospace, Consolas, monospace; font-weight: 700; color: #fff;
-    background: var(--accent); border: 1px solid var(--accent-light);
-    transition: transform .3s var(--ease);
-  }
-  .block:hover .num { transform: rotate(-4deg) scale(1.06); }
-  .block > div:last-child { flex: 1; min-width: 0; }
-  .block h2 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
-  .desc { color: var(--muted); font-size: .95rem; }
+#loginScreen {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+}
 
-  label.cap { display: block; margin-top: 18px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-  textarea {
-    width: 100%; margin-top: 6px; padding: 10px 12px; min-height: 100px; resize: vertical;
-    background: #0a0a0b; color: var(--text); border: 1px solid var(--border);
-    font: inherit; font-size: .95rem; outline: none;
-    transition: border-color .2s, box-shadow .2s;
-  }
-  textarea:focus { border-color: var(--accent-light); box-shadow: 0 0 0 3px rgba(184,81,127,.18); }
-  .count { text-align: right; font-size: 11px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; margin-top: 4px; }
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 38px;
+    background: var(--panel);
+    border: 1px solid #303039;
+    border-radius: 22px;
+    text-align: center;
+}
 
-  /* toggle switch */
-  .switch-row { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
-  .switch { position: relative; width: 52px; height: 28px; flex-shrink: 0; }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .slider {
-    position: absolute; inset: 0; cursor: pointer; background: #0a0a0b;
-    border: 1px solid var(--border); transition: all .3s var(--ease);
-  }
-  .slider::before {
-    content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px;
-    background: var(--muted); transition: all .3s var(--ease);
-  }
-  .switch input:checked + .slider { background: var(--accent); border-color: var(--accent-light); }
-  .switch input:checked + .slider::before { transform: translateX(24px); background: #fff; }
-  .switch input:focus-visible + .slider { box-shadow: 0 0 0 3px rgba(184,81,127,.3); }
-  #switchText { font-family: ui-monospace, Consolas, monospace; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); transition: color .3s; }
-  #switchText.on { color: var(--accent-light); }
+.logo {
+    width: 65px;
+    height: 65px;
+    object-fit: contain;
+    margin-bottom: 15px;
+}
 
-  /* type picker */
-  .types { display: flex; gap: 12px; margin-top: 6px; }
-  .type-opt {
-    flex: 1; padding: 14px; text-align: left; cursor: pointer; font-family: inherit; color: var(--text);
-    background: #0a0a0b; border: 1px solid var(--border); border-left: 3px solid var(--border);
-    transition: all .25s var(--ease);
-  }
-  .type-opt small { display: block; color: var(--muted); font-size: 12px; }
-  .type-opt b { font-size: .92rem; }
-  .type-opt:hover { transform: translateY(-2px); background: rgba(82,15,46,.15); }
-  .type-opt[data-type="1"].sel { border-color: var(--yellow); box-shadow: 0 0 0 1px var(--yellow) inset, 0 6px 24px rgba(224,176,80,.12); }
-  .type-opt[data-type="2"].sel { border-color: var(--red); box-shadow: 0 0 0 1px var(--red) inset, 0 6px 24px rgba(224,85,106,.14); }
+.login-card h1 {
+    margin: 0;
+    font-size: 27px;
+}
 
-  /* preview */
-  .preview {
-    margin-top: 6px; padding: 16px 18px; border: 1px solid var(--border);
-    background: #0a0a0b; min-height: 64px; transition: all .35s var(--ease);
-    word-break: break-word; white-space: pre-wrap;
-  }
-  .preview.t1 { border-left: 4px solid var(--yellow); background: rgba(224,176,80,.08); color: #f0d48a; }
-  .preview.t2 { border-left: 6px solid var(--red); background: rgba(224,85,106,.12); color: #ff9aa9; font-weight: 700; font-size: 1.12rem; }
-  .preview.hidden { opacity: .4; border-style: dashed; }
-  .preview .flag { display: block; font-family: ui-monospace, Consolas, monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; opacity: .7; margin-bottom: 4px; font-weight: 400; }
+.login-card p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
 
-  .btn {
-    display: inline-block; margin-top: 14px; padding: 10px 22px;
-    background: var(--accent); color: #fff; border: 1px solid var(--accent-light);
-    font-weight: 600; letter-spacing: 1px; text-transform: uppercase; font-size: .8rem;
-    cursor: pointer; font-family: inherit; transition: all .2s ease, transform .15s;
-  }
-  .btn:hover { background: var(--accent-light); color: #000; transform: translateY(-1px); }
-  .btn:active { transform: translateY(1px) scale(.98); }
-  .btn.ghost { background: transparent; border-color: var(--border); color: var(--muted); margin-left: 8px; }
-  .btn.ghost:hover { border-color: var(--accent-light); color: var(--text); background: rgba(82,15,46,.25); }
-  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; background: var(--accent); color: #fff; }
-  .btn.dirty { animation: pulse 1.8s infinite; }
+.google-button {
+    width: 100%;
+    margin-top: 25px;
+    padding: 14px;
+    background: white;
+    color: #171717;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    transition: .2s;
+}
 
-  .mini {
-    background: transparent; border: 1px solid var(--border); color: var(--muted);
-    padding: 4px 10px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
-    font-family: ui-monospace, Consolas, monospace; transition: all .2s;
-  }
-  .mini:hover { border-color: var(--accent-light); color: var(--text); background: rgba(82,15,46,.3); }
+.google-button:hover {
+    background: #e8e8e8;
+    transform: translateY(-1px);
+}
 
-  .final { padding: 28px 32px; text-align: center; background: rgba(82,15,46,.18); }
-  .final p { color: var(--muted); }
+.login-error {
+    color: #ff7777;
+    font-size: 13px;
+    margin-top: 15px;
+}
 
-  .center { padding: 56px 32px; text-align: center; }
-  .center .icon { font-size: 40px; margin-bottom: 14px; }
-  .center p { color: var(--muted); margin-top: 6px; }
-  .err { color: var(--red); font-size: 13px; margin-top: 14px; min-height: 18px; }
+/* ADMIN */
 
-  footer {
-    text-align: center; padding: 14px; border-top: 1px solid var(--border);
-    font-size: 12px; color: var(--muted); font-family: ui-monospace, Consolas, monospace;
-  }
+#adminScreen {
+    min-height: 100vh;
+}
 
-  #toast {
-    position: fixed; bottom: 28px; left: 50%; transform: translate(-50%, 30px);
-    background: var(--panel); border: 1px solid var(--accent-light); color: var(--text);
-    padding: 10px 22px; font-size: 13px; opacity: 0; pointer-events: none;
-    transition: all .35s var(--ease); box-shadow: 0 10px 40px rgba(0,0,0,.6);
-  }
-  #toast.show { opacity: 1; transform: translate(-50%, 0); }
-  #toast.bad { border-color: var(--red); }
+header {
+    height: 75px;
+    padding: 0 5%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #111115;
+    border-bottom: 1px solid #292930;
+}
 
-  @media (max-width: 520px) {
-    .block { padding: 20px; gap: 14px; }
-    header { padding: 28px 20px 22px; }
-    .types { flex-direction: column; }
-    .final { padding: 24px 20px; }
-  }
-  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-brand img {
+    width: 35px;
+    height: 45px;
+    object-fit: contain;
+}
+
+.header-brand h2 {
+    font-size: 17px;
+    margin: 0;
+}
+
+.header-brand span {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 3px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#userEmail {
+    color: #aaaab5;
+    font-size: 12px;
+}
+
+.logout-button {
+    background: #292930;
+    color: white;
+    border: 1px solid #3a3a43;
+    padding: 9px 14px;
+    border-radius: 9px;
+}
+
+main {
+    width: 100%;
+    max-width: 1050px;
+    margin: 0 auto;
+    padding: 45px 22px 70px;
+}
+
+.page-heading {
+    margin-bottom: 30px;
+}
+
+.page-heading h1 {
+    font-size: 30px;
+    margin: 0 0 8px;
+}
+
+.page-heading p {
+    color: var(--muted);
+    margin: 0;
+    font-size: 14px;
+}
+
+.panel {
+    background: var(--panel);
+    border: 1px solid #303039;
+    border-radius: 17px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.panel-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.panel-heading h2 {
+    font-size: 17px;
+    margin: 0;
+}
+
+.panel-heading p {
+    color: var(--muted);
+    font-size: 12px;
+    margin: 5px 0 0;
+}
+
+/* STATUS */
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.status-text strong {
+    display: block;
+    font-size: 15px;
+}
+
+.status-text small {
+    display: block;
+    color: var(--muted);
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+.switch {
+    position: relative;
+    width: 54px;
+    height: 30px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch span {
+    position: absolute;
+    inset: 0;
+    background: #41414a;
+    border-radius: 30px;
+    transition: .2s;
+}
+
+.switch span:before {
+    content: "";
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    left: 4px;
+    top: 4px;
+    background: white;
+    border-radius: 50%;
+    transition: .2s;
+}
+
+.switch input:checked + span {
+    background: #22a66a;
+}
+
+.switch input:checked + span:before {
+    transform: translateX(24px);
+}
+
+/* ANNOUNCEMENT TYPES */
+
+.types {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.type-opt {
+    text-align: left;
+    padding: 17px;
+    background: #202027;
+    color: white;
+    border: 1px solid #383840;
+    border-radius: 12px;
+    transition: .2s;
+}
+
+.type-opt:hover {
+    background: #292930;
+}
+
+.type-opt b {
+    display: block;
+    font-size: 14px;
+}
+
+.type-opt small {
+    display: block;
+    color: #a5a5af;
+    font-size: 11px;
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+.type-opt[data-type="1"].sel {
+    border-color: #eab308;
+    box-shadow: 0 0 0 1px #eab308 inset,
+                0 6px 24px rgba(234,179,8,.12);
+}
+
+.type-opt[data-type="2"].sel {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 1px #ef4444 inset,
+                0 6px 24px rgba(239,68,68,.12);
+}
+
+.type-opt[data-type="3"].sel {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6 inset,
+                0 6px 24px rgba(59,130,246,.14);
+}
+
+/* MESSAGE */
+
+label {
+    display: block;
+    font-size: 13px;
+    font-weight: 650;
+    margin-bottom: 10px;
+}
+
+textarea {
+    width: 100%;
+    min-height: 125px;
+    resize: vertical;
+    background: #101015;
+    color: white;
+    border: 1px solid #383840;
+    border-radius: 11px;
+    padding: 15px;
+    outline: none;
+    line-height: 1.6;
+}
+
+textarea:focus {
+    border-color: #9a5272;
+}
+
+.char-count {
+    text-align: right;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 7px;
+}
+
+/* PREVIEW */
+
+.preview {
+    padding: 20px;
+    border-radius: 11px;
+    border-left: 6px solid #eab308;
+    background: rgba(234,179,8,.12);
+    color: #fde68a;
+    font-weight: 650;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.preview .preview-label {
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    opacity: .85;
+}
+
+.preview .preview-title {
+    font-size: 17px;
+    margin-bottom: 7px;
+}
+
+.preview.t1 {
+    border-left-color: #eab308;
+    background: rgba(234,179,8,.12);
+    color: #fde68a;
+}
+
+.preview.t2 {
+    border-left-color: #ef4444;
+    background: rgba(239,68,68,.13);
+    color: #fca5a5;
+    font-weight: 750;
+}
+
+.preview.t3 {
+    border-left-color: #3b82f6;
+    background: rgba(59,130,246,.12);
+    color: #93c5fd;
+    font-weight: 700;
+    font-size: 1.12rem;
+}
+
+/* BUTTONS */
+
+.actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.save-button {
+    flex: 1;
+    background: var(--maroon);
+    color: white;
+    border: 1px solid #7d3152;
+    padding: 14px;
+    border-radius: 11px;
+    font-weight: 750;
+    transition: .2s;
+}
+
+.save-button:hover {
+    background: #6b1b40;
+}
+
+.refresh-button {
+    background: #292930;
+    color: white;
+    border: 1px solid #41414a;
+    padding: 14px 18px;
+    border-radius: 11px;
+}
+
+.save-button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* FOOTER STATUS */
+
+#statusMessage {
+    margin-top: 15px;
+    font-size: 13px;
+    color: #a5a5af;
+}
+
+#statusMessage.success {
+    color: #4ade80;
+}
+
+#statusMessage.error {
+    color: #f87171;
+}
+
+footer {
+    text-align: center;
+    color: #666671;
+    font-size: 11px;
+    padding: 20px;
+}
+
+@media(max-width: 700px) {
+    header {
+        padding: 0 18px;
+    }
+
+    #userEmail {
+        display: none;
+    }
+
+    main {
+        padding: 30px 15px;
+    }
+
+    .types {
+        grid-template-columns: 1fr;
+    }
+
+    .panel {
+        padding: 19px;
+    }
+
+    .page-heading h1 {
+        font-size: 25px;
+    }
+}
 </style>
 </head>
+
 <body>
-<main class="container">
-  <header>
-    <div>
-      <div class="version">ADMIN</div>
-      <h1>Student <span>Cafe+</span> Admin</h1>
-      <div class="subtitle">Announcement control</div>
-    </div>
-    <div class="user" id="userBox" style="display:none">
-      Signed in as<b id="userEmail"></b>
-      <button class="mini" id="signoutBtn" style="margin-top:8px">Sign out</button>
-    </div>
-  </header>
 
-  <section class="view active" id="loginView">
-    <div class="center">
-      <div class="icon">🔐</div>
-      <h2>Restricted area</h2>
-      <p>Sign in with an approved Google account to continue.</p>
-      <button class="btn" id="googleBtn">Sign in with Google</button>
-      <div class="err" id="error"></div>
-    </div>
-  </section>
+<!-- LOGIN SCREEN -->
 
-  <section class="view" id="deniedView">
-    <div class="center">
-      <div class="icon">⛔</div>
-      <h2>Access denied</h2>
-      <p id="deniedMsg"></p>
-      <button class="btn" id="deniedSignout">Sign out</button>
-    </div>
-  </section>
+<section id="loginScreen">
+    <div class="login-card">
 
-  <section class="view" id="dashView">
-    <div class="block">
-      <div class="num">01</div>
-      <div>
-        <h2>Visibility</h2>
-        <p class="desc">Turn the announcement on or off for everyone using the extension.</p>
-        <div class="switch-row">
-          <label class="switch">
-            <input type="checkbox" id="fActive">
-            <span class="slider"></span>
-          </label>
-          <span id="switchText">Hidden</span>
+        <img
+            class="logo"
+            src="https://www.chevalier.nsw.edu.au/wp-content/themes/chev/svg/logo-maroon.svg"
+            alt="Chevalier College"
+        >
+
+        <h1>Student Cafe+</h1>
+
+        <p>
+            Administration Portal<br>
+            Sign in using an approved Chevalier administrator account.
+        </p>
+
+        <button class="google-button" id="loginButton">
+            Continue with Google
+        </button>
+
+        <div class="login-error" id="loginError"></div>
+
+    </div>
+</section>
+
+
+<!-- ADMIN SCREEN -->
+
+<section id="adminScreen" class="hidden">
+
+    <header>
+
+        <div class="header-brand">
+
+            <img
+                src="https://www.chevalier.nsw.edu.au/wp-content/themes/chev/svg/logo-white.svg"
+                alt="Chevalier"
+            >
+
+            <div>
+                <h2>Student Cafe+</h2>
+                <span>Administration Portal</span>
+            </div>
+
         </div>
-      </div>
-    </div>
 
-    <div class="block">
-      <div class="num">02</div>
-      <div>
-        <h2>Style</h2>
-        <p class="desc">Pick how it shows up.</p>
-        <div class="types">
-          <button class="type-opt" data-type="1" type="button"><b>Basic Yellow</b><small>Small, gentle heads-up</small></button>
-          <button class="type-opt" data-type="2" type="button"><b>Big Important Red</b><small>Hard to miss</small></button>
+        <div class="header-right">
+            <span id="userEmail"></span>
+            <button class="logout-button" id="logoutButton">
+                Sign out
+            </button>
         </div>
-      </div>
-    </div>
 
-    <div class="block">
-      <div class="num">03</div>
-      <div>
-        <h2>Message</h2>
-        <p class="desc">What do students need to know?</p>
-        <label class="cap" for="fMsg">Announcement text</label>
-        <textarea id="fMsg" maxlength="500" placeholder="Type your announcement here..."></textarea>
-        <div class="count"><span id="cnt">0</span> / 500</div>
-      </div>
-    </div>
+    </header>
 
-    <div class="block">
-      <div class="num">04</div>
-      <div>
-        <h2>Preview</h2>
-        <p class="desc">Roughly how it will look.</p>
-        <div class="preview" id="preview"></div>
-      </div>
-    </div>
 
-    <div class="final">
-      <p id="status">Loading...</p>
-      <button class="btn" id="publishBtn" disabled>Publish changes</button>
-      <button class="btn ghost" id="reloadBtn">Discard &amp; reload</button>
-    </div>
-  </section>
+    <main>
 
-  <footer>Student Cafe+ // admin</footer>
-</main>
-<div id="toast"></div>
+        <div class="page-heading">
+            <h1>Announcements</h1>
+            <p>Manage announcements displayed to Student Cafe+ users.</p>
+        </div>
+
+
+        <!-- ANNOUNCEMENT STATUS -->
+
+        <section class="panel">
+
+            <div class="panel-heading">
+                <div>
+                    <h2>Announcement Status</h2>
+                    <p>Control whether the announcement is displayed.</p>
+                </div>
+
+                <span id="statusLabel" style="font-size:12px;color:#aaa;">
+                    Disabled
+                </span>
+            </div>
+
+            <div class="status-row">
+
+                <div class="status-text">
+                    <strong>Enable Announcement</strong>
+                    <small>Turn this on to display your announcement.</small>
+                </div>
+
+                <label class="switch">
+                    <input type="checkbox" id="announcementToggle">
+                    <span></span>
+                </label>
+
+            </div>
+
+        </section>
+
+
+        <!-- ANNOUNCEMENT TYPE -->
+
+        <section class="panel">
+
+            <div class="panel-heading">
+                <div>
+                    <h2>Announcement Style</h2>
+                    <p>Choose the appearance of your announcement.</p>
+                </div>
+            </div>
+
+            <div class="types">
+
+                <button
+                    class="type-opt sel"
+                    data-type="1"
+                    type="button"
+                >
+                    <b>Basic Yellow</b>
+                    <small>Small and gentle general announcement.</small>
+                </button>
+
+                <button
+                    class="type-opt"
+                    data-type="2"
+                    type="button"
+                >
+                    <b>Big Important Red</b>
+                    <small>Prominent notice for important information.</small>
+                </button>
+
+                <button
+                    class="type-opt"
+                    data-type="3"
+                    type="button"
+                >
+                    <b>Information Blue</b>
+                    <small>Clean information update.</small>
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- MESSAGE -->
+
+        <section class="panel">
+
+            <div class="panel-heading">
+                <div>
+                    <h2>Announcement Message</h2>
+                    <p>Write the message students will see.</p>
+                </div>
+            </div>
+
+            <label for="announcementMessage">
+                Message
+            </label>
+
+            <textarea
+                id="announcementMessage"
+                maxlength="500"
+                placeholder="Write your announcement here..."
+            ></textarea>
+
+            <div class="char-count">
+                <span id="charCount">0</span>/500 characters
+            </div>
+
+        </section>
+
+
+        <!-- PREVIEW -->
+
+        <section class="panel">
+
+            <div class="panel-heading">
+                <div>
+                    <h2>Live Preview</h2>
+                    <p>This is a preview of your selected announcement.</p>
+                </div>
+            </div>
+
+            <div class="preview t1" id="announcementPreview">
+
+                <div class="preview-label" id="previewLabel">
+                    GENERAL ANNOUNCEMENT
+                </div>
+
+                <div class="preview-title" id="previewTitle">
+                    A message for students
+                </div>
+
+                <div id="previewMessage">
+                    Your announcement message will appear here.
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- SAVE -->
+
+        <section class="panel">
+
+            <div class="panel-heading">
+                <div>
+                    <h2>Publish Changes</h2>
+                    <p>Save your announcement to the live system.</p>
+                </div>
+            </div>
+
+            <div class="actions">
+
+                <button class="save-button" id="saveButton">
+                    Save Announcement
+                </button>
+
+                <button class="refresh-button" id="refreshButton">
+                    Reload
+                </button>
+
+            </div>
+
+            <div id="statusMessage">
+                Ready.
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer>
+        Student Cafe+ Administration · Chevalier College
+    </footer>
+
+</section>
+
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
-  from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+/* FIREBASE IMPORTS */
+
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+
+/* FIREBASE CONFIGURATION */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBTqtQhMGwIpHA70Ft_23OWQxb-Wy6cd3I",
-  authDomain: "chevalier-collage.firebaseapp.com",
-  projectId: "chevalier-collage",
-  storageBucket: "chevalier-collage.firebasestorage.app",
-  messagingSenderId: "924873128628",
-  appId: "1:924873128628:web:6ec41cdd9b079bb53235e1"
+    apiKey: "AIzaSyBTqtQhMGwIpHA70Ft_23OWQxb-Wy6cd3I",
+    authDomain: "chevalier-collage.firebaseapp.com",
+    projectId: "chevalier-collage",
+    storageBucket: "chevalier-collage.firebasestorage.app",
+    messagingSenderId: "924873128628",
+    appId: "1:924873128628:web:6ec41cdd9b079bb53235e1"
 };
 
-const WORKER_URL = "https://throbbing-sunset-4c33.ryotubers.workers.dev/";
-const APPROVED = [
-  "ryotubers@gmail.com",
-  "aw101007@students.chevalier.nsw.edu.au"
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+
+/* CLOUDFLARE WORKER */
+
+const WORKER_URL =
+"https://throbbing-sunset-4c33.ryotubers.workers.dev/";
+
+
+/* APPROVED ADMIN EMAILS */
+
+const APPROVED_EMAILS = [
+    "ryotubers@gmail.com",
+    "aw101007@students.chevalier.nsw.edu.au"
 ];
 
-const auth = getAuth(initializeApp(firebaseConfig));
-const $ = id => document.getElementById(id);
 
-let state = { announcement: false, announcetype: 2, announcemsg: "" };
-let dirty = false;
-let currentUser = null;
+/* ELEMENTS */
 
-function show(view) {
-  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-  $(view).classList.add("active");
-}
+const loginScreen = document.getElementById("loginScreen");
+const adminScreen = document.getElementById("adminScreen");
 
-function toast(msg, bad = false) {
-  const t = $("toast");
-  t.textContent = msg;
-  t.classList.toggle("bad", bad);
-  t.classList.add("show");
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.classList.remove("show"), 2800);
-}
+const loginButton = document.getElementById("loginButton");
+const logoutButton = document.getElementById("logoutButton");
 
-function setDirty(v) {
-  dirty = v;
-  $("publishBtn").disabled = !v;
-  $("publishBtn").classList.toggle("dirty", v);
-  $("status").textContent = v ? "You have unpublished changes." : "Everything is published.";
-}
+const loginError = document.getElementById("loginError");
+const userEmail = document.getElementById("userEmail");
 
-function refresh() {
-  $("fActive").checked = state.announcement;
-  $("switchText").textContent = state.announcement ? "Live" : "Hidden";
-  $("switchText").classList.toggle("on", state.announcement);
+const announcementToggle =
+document.getElementById("announcementToggle");
 
-  document.querySelectorAll(".type-opt").forEach(b =>
-    b.classList.toggle("sel", Number(b.dataset.type) === state.announcetype));
+const statusLabel = document.getElementById("statusLabel");
 
-  if ($("fMsg").value !== state.announcemsg) $("fMsg").value = state.announcemsg;
-  $("cnt").textContent = state.announcemsg.length;
+const messageInput =
+document.getElementById("announcementMessage");
 
-  const p = $("preview");
-  p.className = "preview t" + state.announcetype + (state.announcement ? "" : " hidden");
-  p.textContent = "";
-  const flag = document.createElement("span");
-  flag.className = "flag";
-  flag.textContent = state.announcement ? "Live" : "Hidden (not shown to users)";
-  p.append(flag, document.createTextNode(state.announcemsg || "Your message will appear here."));
-}
+const charCount = document.getElementById("charCount");
 
-$("fActive").onchange = e => { state.announcement = e.target.checked; setDirty(true); refresh(); };
-document.querySelectorAll(".type-opt").forEach(b =>
-  b.onclick = () => { state.announcetype = Number(b.dataset.type); setDirty(true); refresh(); });
-$("fMsg").oninput = e => { state.announcemsg = e.target.value; setDirty(true); refresh(); };
+const preview = document.getElementById("announcementPreview");
+const previewLabel = document.getElementById("previewLabel");
+const previewTitle = document.getElementById("previewTitle");
+const previewMessage = document.getElementById("previewMessage");
 
-async function load() {
-  $("status").textContent = "Loading...";
-  try {
-    const res = await fetch(WORKER_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const d = await res.json();
-    state = {
-      announcement: d.announcement === true,
-      announcetype: d.announcetype === 1 ? 1 : 2,
-      announcemsg: typeof d.announcemsg === "string" ? d.announcemsg : ""
-    };
-    if (state.announcemsg === "No Text") state.announcemsg = "";
-    setDirty(false); refresh();
-  } catch (e) {
-    toast("Couldn't load: " + e.message, true);
-    $("status").textContent = "Load failed.";
-  }
-}
+const saveButton = document.getElementById("saveButton");
+const refreshButton = document.getElementById("refreshButton");
+const statusMessage = document.getElementById("statusMessage");
 
-$("reloadBtn").onclick = () => {
-  if (dirty && !confirm("Discard unpublished changes?")) return;
-  load();
+
+/* STATE */
+
+let state = {
+    announcement: false,
+    announcetype: 1,
+    announcemsg: ""
 };
 
-$("publishBtn").onclick = async () => {
-  const btn = $("publishBtn");
-  if (state.announcement && !state.announcemsg.trim()) return toast("Write a message first.", true);
-  btn.disabled = true; btn.textContent = "Publishing...";
-  try {
-    const token = await currentUser.getIdToken(true);
-    const res = await fetch(WORKER_URL, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-      body: JSON.stringify({
-        announcement: state.announcement,
-        announcetype: state.announcetype,
-        announcemsg: state.announcemsg.trim() || "No Text"
-      })
+
+/* ANNOUNCEMENT STYLES */
+
+const announcementStyles = {
+    1: {
+        label: "GENERAL ANNOUNCEMENT",
+        title: "A message for students"
+    },
+
+    2: {
+        label: "IMPORTANT ANNOUNCEMENT",
+        title: "Important Notice"
+    },
+
+    3: {
+        label: "INFORMATION",
+        title: "Information Update"
+    }
+};
+
+
+/* STATUS MESSAGE */
+
+function setStatus(message, type = "") {
+
+    statusMessage.textContent = message;
+
+    statusMessage.className = type;
+
+}
+
+
+/* PREVIEW */
+
+function updatePreview() {
+
+    const type = state.announcetype;
+
+    const style = announcementStyles[type];
+
+    preview.className = "preview t" + type;
+
+    previewLabel.textContent = style.label;
+
+    previewTitle.textContent = style.title;
+
+    previewMessage.textContent =
+        messageInput.value.trim() ||
+        "Your announcement message will appear here.";
+
+    charCount.textContent = messageInput.value.length;
+
+}
+
+
+/* SELECT ANNOUNCEMENT TYPE */
+
+function selectType(type) {
+
+    type = Number(type);
+
+    if (![1, 2, 3].includes(type)) {
+        return;
+    }
+
+    state.announcetype = type;
+
+    document.querySelectorAll(".type-opt").forEach(button => {
+
+        button.classList.toggle(
+            "sel",
+            Number(button.dataset.type) === type
+        );
+
     });
-    if (!res.ok) throw new Error((await res.text()) || "HTTP " + res.status);
-    setDirty(false);
-    toast("Published!");
-  } catch (e) {
-    toast("Publish failed: " + e.message, true);
-    btn.disabled = false;
-  }
-  btn.textContent = "Publish changes";
-};
 
-window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+    updatePreview();
 
-$("googleBtn").onclick = async () => {
-  $("error").textContent = "";
-  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
-  catch (err) { $("error").textContent = err.message; }
-};
-$("signoutBtn").onclick = $("deniedSignout").onclick = () => signOut(auth);
+}
 
-onAuthStateChanged(auth, user => {
-  currentUser = user;
-  if (!user) { $("userBox").style.display = "none"; show("loginView"); return; }
-  $("userBox").style.display = "block";
-  $("userEmail").textContent = user.email;
-  if (APPROVED.includes((user.email || "").toLowerCase())) {
-    show("dashView"); refresh(); load();
-  } else {
-    $("deniedMsg").textContent = `${user.email} isn't on the approved list.`;
-    show("deniedView");
-  }
+
+/* ANNOUNCEMENT TOGGLE */
+
+announcementToggle.addEventListener("change", () => {
+
+    state.announcement = announcementToggle.checked;
+
+    statusLabel.textContent =
+        state.announcement ? "Enabled" : "Disabled";
+
+    statusLabel.style.color =
+        state.announcement ? "#4ade80" : "#aaa";
+
 });
+
+
+/* TYPE BUTTONS */
+
+document.querySelectorAll(".type-opt").forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        selectType(button.dataset.type);
+
+    });
+
+});
+
+
+/* MESSAGE INPUT */
+
+messageInput.addEventListener("input", () => {
+
+    state.announcemsg = messageInput.value;
+
+    updatePreview();
+
+});
+
+
+/* LOGIN */
+
+loginButton.addEventListener("click", async () => {
+
+    loginError.textContent = "";
+
+    loginButton.disabled = true;
+    loginButton.textContent = "Signing in...";
+
+    try {
+
+        await signInWithPopup(auth, provider);
+
+    } catch (error) {
+
+        loginError.textContent =
+            error.message || "Unable to sign in.";
+
+    }
+
+    loginButton.disabled = false;
+    loginButton.textContent = "Continue with Google";
+
+});
+
+
+/* LOGOUT */
+
+logoutButton.addEventListener("click", async () => {
+
+    await signOut(auth);
+
+});
+
+
+/* AUTHENTICATION CHECK */
+
+onAuthStateChanged(auth, async user => {
+
+    if (!user) {
+
+        loginScreen.classList.remove("hidden");
+        adminScreen.classList.add("hidden");
+
+        return;
+
+    }
+
+    const email = (user.email || "").toLowerCase();
+
+    if (
+        !user.emailVerified ||
+        !APPROVED_EMAILS.includes(email)
+    ) {
+
+        await signOut(auth);
+
+        loginError.textContent =
+            "Access denied. This Google account is not an approved administrator.";
+
+        loginScreen.classList.remove("hidden");
+        adminScreen.classList.add("hidden");
+
+        return;
+
+    }
+
+    userEmail.textContent = email;
+
+    loginScreen.classList.add("hidden");
+    adminScreen.classList.remove("hidden");
+
+    await loadAnnouncement();
+
+});
+
+
+/* LOAD ANNOUNCEMENT */
+
+async function loadAnnouncement() {
+
+    setStatus("Loading announcement...");
+
+    try {
+
+        const response = await fetch(WORKER_URL, {
+            method: "GET",
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+            throw new Error("Unable to load announcement.");
+        }
+
+        const data = await response.json();
+
+        state = {
+            announcement: data.announcement === true,
+
+            announcetype:
+                [1, 2, 3].includes(Number(data.announcetype))
+                    ? Number(data.announcetype)
+                    : 2,
+
+            announcemsg: String(data.announcemsg || "")
+        };
+
+        announcementToggle.checked = state.announcement;
+
+        statusLabel.textContent =
+            state.announcement ? "Enabled" : "Disabled";
+
+        statusLabel.style.color =
+            state.announcement ? "#4ade80" : "#aaa";
+
+        messageInput.value = state.announcemsg;
+
+        selectType(state.announcetype);
+
+        updatePreview();
+
+        setStatus("Announcement loaded successfully.", "success");
+
+    } catch (error) {
+
+        setStatus(error.message, "error");
+
+    }
+
+}
+
+
+/* SAVE ANNOUNCEMENT */
+
+async function saveAnnouncement() {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+
+        setStatus("Please sign in again.", "error");
+
+        return;
+
+    }
+
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving...";
+
+    setStatus("Publishing announcement...");
+
+    try {
+
+        const token = await user.getIdToken(true);
+
+        const payload = {
+
+            announcement: announcementToggle.checked,
+
+            announcetype: state.announcetype,
+
+            announcemsg: messageInput.value.trim().slice(0, 500)
+
+        };
+
+
+        const response = await fetch(WORKER_URL, {
+
+            method: "PUT",
+
+            headers: {
+
+                "Content-Type": "application/json",
+
+                "Authorization": "Bearer " + token
+
+            },
+
+            body: JSON.stringify(payload)
+
+        });
+
+
+        const result = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                result.error || "Failed to save announcement."
+            );
+
+        }
+
+
+        state = payload;
+
+        statusLabel.textContent =
+            payload.announcement ? "Enabled" : "Disabled";
+
+        statusLabel.style.color =
+            payload.announcement ? "#4ade80" : "#aaa";
+
+        setStatus(
+            "Announcement successfully published!",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        setStatus(error.message, "error");
+
+    }
+
+
+    saveButton.disabled = false;
+    saveButton.textContent = "Save Announcement";
+
+}
+
+
+/* SAVE BUTTON */
+
+saveButton.addEventListener("click", saveAnnouncement);
+
+
+/* RELOAD BUTTON */
+
+refreshButton.addEventListener("click", loadAnnouncement);
+
+
+/* INITIAL PREVIEW */
+
+selectType(1);
+updatePreview();
+
 </script>
+
 </body>
 </html>

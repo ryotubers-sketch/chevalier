@@ -172,6 +172,16 @@
   #toast.show { opacity: 1; transform: translate(-50%, 0); }
   #toast.bad { border-color: var(--red); }
 
+  /* banner section */
+  .field { display: block; width: 100%; margin-top: 6px; padding: 10px 12px; background: #0a0a0b; color: var(--text); border: 1px solid var(--border); font: inherit; font-size: .95rem; outline: none; transition: border-color .2s, box-shadow .2s; }
+  .field:focus { border-color: var(--accent-light); box-shadow: 0 0 0 3px rgba(184,81,127,.18); }
+  .bn-prev { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; padding: 14px 16px; background: rgba(184,81,127,.12); border: 1px solid var(--border); border-left: 5px solid var(--accent-light); font-weight: 600; font-size: .92rem; }
+  .bn-prev.hidden { opacity: .4; border-style: dashed; }
+  .bn-prev .bn-txt { flex: 1; min-width: 0; word-break: break-word; }
+  .bn-prev .bn-open { flex-shrink: 0; padding: 5px 14px; background: var(--accent-light); color: #000; font-size: .8rem; font-weight: 700; }
+  #bnSwitchText { font-family: ui-monospace, Consolas, monospace; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); transition: color .3s; }
+  #bnSwitchText.on { color: var(--accent-light); }
+
   /* offline section */
   .check-row { display: flex; align-items: center; gap: 10px; margin-top: 18px; cursor: pointer; font-size: .95rem; }
   .check-row input { width: 18px; height: 18px; accent-color: var(--accent-light); cursor: pointer; }
@@ -267,12 +277,6 @@
       </div>
     </div>
 
-    <div class="final">
-      <p id="status">Loading...</p>
-      <button class="btn" id="publishBtn" disabled>Publish changes</button>
-      <button class="btn ghost" id="reloadBtn">Discard &amp; reload</button>
-    </div>
-
     <div class="block">
       <div class="num">05</div>
       <div>
@@ -302,6 +306,41 @@
       </div>
     </div>
 
+    <div class="block">
+      <div class="num">06</div>
+      <div>
+        <h2>Timetable Banner</h2>
+        <p class="desc">A banner shown above the timetable on Home and the Timetable tab. Add a link to give it an "Open" button. Separate from the other sections, with its own publish button.</p>
+
+        <div class="switch-row">
+          <label class="switch">
+            <input type="checkbox" id="bnEnabled">
+            <span class="slider"></span>
+          </label>
+          <span id="bnSwitchText">Hidden</span>
+        </div>
+
+        <label class="cap" for="bnText">Banner text</label>
+        <textarea id="bnText" maxlength="300" style="min-height:70px" placeholder="e.g. Get the special day schedule"></textarea>
+        <div class="count"><span id="bnCnt">0</span> / 300</div>
+
+        <label class="cap" for="bnLink">Link (optional, adds an "Open" button)</label>
+        <input class="field" type="url" id="bnLink" placeholder="https://...">
+
+        <label class="cap">Preview</label>
+        <div class="bn-prev" id="bnPrev"></div>
+
+        <button class="btn" id="bnPublishBtn" disabled>Publish banner</button>
+        <button class="btn ghost" id="bnReloadBtn">Discard &amp; reload</button>
+        <div class="off-status" id="bnStatus">Loading...</div>
+      </div>
+    </div>
+
+    <div class="final">
+      <p id="status">Loading...</p>
+      <button class="btn" id="publishBtn" disabled>Publish changes</button>
+      <button class="btn ghost" id="reloadBtn">Discard &amp; reload</button>
+    </div>
   </section>
 
   <footer>Student Cafe+ // admin</footer>
@@ -324,6 +363,7 @@ const firebaseConfig = {
 
 const WORKER_URL = "https://throbbing-sunset-4c33.ryotubers.workers.dev/";
 const OFFLINE_WORKER_URL = "https://broad-cell-824d.ryotubers.workers.dev/";
+const BANNER_WORKER_URL = "https://YOUR-BANNER-WORKER.workers.dev/"; // <-- put your banner worker URL here
 const APPROVED = [
   "ryotubers@gmail.com",
   "aw101007@students.chevalier.nsw.edu.au"
@@ -336,6 +376,8 @@ let state = { announcement: false, announcetype: 2, announcemsg: "" };
 let dirty = false;
 let off = { stats: 0, msg: "", "open-tab": false };
 let offDirty = false;
+let bn = { enabled: false, text: "", link: "" };
+let bnDirty = false;
 let currentUser = null;
 
 function show(view) {
@@ -508,10 +550,92 @@ $("oPublishBtn").onclick = async () => {
   btn.textContent = "Publish offline settings";
 };
 
+/* ===================== TIMETABLE BANNER ===================== */
+
+function setBnDirty(v) {
+  bnDirty = v;
+  $("bnPublishBtn").disabled = !v;
+  $("bnPublishBtn").classList.toggle("dirty", v);
+  $("bnStatus").textContent = v ? "You have unpublished banner changes." : "Banner settings are published.";
+}
+
+function bnRefresh() {
+  $("bnEnabled").checked = bn.enabled;
+  $("bnSwitchText").textContent = bn.enabled ? "Live" : "Hidden";
+  $("bnSwitchText").classList.toggle("on", bn.enabled);
+  if ($("bnText").value !== bn.text) $("bnText").value = bn.text;
+  if ($("bnLink").value !== bn.link) $("bnLink").value = bn.link;
+  $("bnCnt").textContent = bn.text.length;
+
+  const p = $("bnPrev");
+  p.className = "bn-prev" + (bn.enabled ? "" : " hidden");
+  p.textContent = "";
+  const t = document.createElement("span");
+  t.className = "bn-txt";
+  t.textContent = bn.text || "Your banner text will appear here.";
+  p.append(t);
+  if (bn.link.trim()) {
+    const o = document.createElement("span");
+    o.className = "bn-open";
+    o.textContent = "Open";
+    p.append(o);
+  }
+}
+
+$("bnEnabled").onchange = e => { bn.enabled = e.target.checked; setBnDirty(true); bnRefresh(); };
+$("bnText").oninput = e => { bn.text = e.target.value; setBnDirty(true); bnRefresh(); };
+$("bnLink").oninput = e => { bn.link = e.target.value; setBnDirty(true); bnRefresh(); };
+
+async function loadBn() {
+  $("bnStatus").textContent = "Loading...";
+  try {
+    const res = await fetch(BANNER_WORKER_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const d = await res.json();
+    bn = {
+      enabled: d.enabled === true,
+      text: typeof d.text === "string" ? d.text : "",
+      link: typeof d.link === "string" ? d.link : ""
+    };
+    setBnDirty(false); bnRefresh();
+  } catch (e) {
+    toast("Couldn't load banner settings: " + e.message, true);
+    $("bnStatus").textContent = "Load failed.";
+  }
+}
+
+$("bnReloadBtn").onclick = () => {
+  if (bnDirty && !confirm("Discard unpublished banner changes?")) return;
+  loadBn();
+};
+
+$("bnPublishBtn").onclick = async () => {
+  const btn = $("bnPublishBtn");
+  if (bn.enabled && !bn.text.trim()) return toast("Write the banner text first.", true);
+  const link = bn.link.trim();
+  if (link && !/^https?:\/\//i.test(link)) return toast("Link must start with http:// or https://", true);
+  btn.disabled = true; btn.textContent = "Publishing...";
+  try {
+    const token = await currentUser.getIdToken(true);
+    const res = await fetch(BANNER_WORKER_URL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({ enabled: bn.enabled, text: bn.text.trim(), link })
+    });
+    if (!res.ok) throw new Error((await res.text()) || "HTTP " + res.status);
+    setBnDirty(false);
+    toast(bn.enabled ? "Banner is live" : "Banner is hidden");
+  } catch (e) {
+    toast("Publish failed: " + e.message, true);
+    btn.disabled = false;
+  }
+  btn.textContent = "Publish banner";
+};
+
 /* ===================== AUTH ===================== */
 
 window.addEventListener("beforeunload", e => {
-  if (dirty || offDirty) { e.preventDefault(); e.returnValue = ""; }
+  if (dirty || offDirty || bnDirty) { e.preventDefault(); e.returnValue = ""; }
 });
 
 $("googleBtn").onclick = async () => {
@@ -527,7 +651,7 @@ onAuthStateChanged(auth, user => {
   $("userBox").style.display = "block";
   $("userEmail").textContent = user.email;
   if (APPROVED.includes((user.email || "").toLowerCase())) {
-    show("dashView"); refresh(); offRefresh(); load(); loadOff();
+    show("dashView"); refresh(); offRefresh(); bnRefresh(); load(); loadOff(); loadBn();
   } else {
     $("deniedMsg").textContent = `${user.email} isn't on the approved list.`;
     show("deniedView");

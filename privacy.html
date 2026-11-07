@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Café+ | Privacy Policy</title>
+<style>
+  :root {
+    --accent: #520f2e;
+    --accent-light: #b8517f;
+    --bg: #0a0a0b;
+    --panel: #111113;
+    --border: #2a2a2e;
+    --text: #e6e6e8;
+    --muted: #8a8a92;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 48px 20px;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(82, 15, 46, 0.35), transparent 55%);
+    background-repeat: no-repeat;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    box-shadow: 0 0 0 1px #000, 0 20px 60px rgba(0, 0, 0, 0.6);
+  }
+
+  header {
+    padding: 36px 32px 28px;
+    border-bottom: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+  }
+
+  .version {
+    display: inline-block;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--accent-light);
+    border: 1px solid var(--accent);
+    background: rgba(82, 15, 46, 0.25);
+    padding: 3px 10px;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  h1 span { color: var(--accent-light); }
+
+  .subtitle {
+    color: var(--muted);
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 12px;
+  }
+
+  .section {
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s ease;
+  }
+
+  .section:hover { background: rgba(82, 15, 46, 0.12); }
+
+  .section h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    padding-left: 12px;
+    border-left: 3px solid var(--accent-light);
+  }
+
+  .section p { color: var(--muted); font-size: 0.95rem; }
+  .section p + p { margin-top: 10px; }
+
+  .section ul {
+    list-style: none;
+    margin: 10px 0;
+  }
+
+  .section li {
+    position: relative;
+    padding-left: 18px;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .section li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 6px;
+    height: 6px;
+    background: var(--accent-light);
+  }
+
+  strong { color: var(--text); font-weight: 600; }
+
+  a {
+    color: var(--accent-light);
+    word-break: break-all;
+  }
+
+  a:hover { color: #fff; }
+
+  .btn {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 10px 22px;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    border: 1px solid var(--accent-light);
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+    word-break: normal;
+  }
+
+  .btn:hover {
+    background: var(--accent-light);
+    color: #000;
+  }
+
+  .final {
+    padding: 28px 32px;
+    text-align: center;
+    background: rgba(82, 15, 46, 0.18);
+  }
+
+  footer {
+    text-align: center;
+    padding: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, Consolas, monospace;
+  }
+
+  a:focus-visible, .btn:focus-visible {
+    outline: 2px solid var(--accent-light);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 520px) {
+    .section { padding: 20px; }
+    header { padding: 28px 20px 22px; }
+    .final { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <div class="version">Last updated: 7 November 2026</div>
+      <h1>Student <span>Café+</span></h1>
+      <div class="subtitle">Privacy Policy</div>
+    </header>
+
+    <section class="section">
+      <h2>Overview</h2>
+      <p>Student Café+ is an unofficial browser extension that changes the look and layout of the Chevalier College Student Cafe portal. It is not affiliated with or endorsed by Chevalier College. We respect your privacy: the extension does not collect, sell or share your personal information.</p>
+    </section>
+
+    <section class="section">
+      <h2>Information the extension accesses</h2>
+      <p>While you are on Student Cafe, the extension reads parts of the page, such as your displayed name, timetable and notices. It does this only to restyle and display the page on your device. This information is never sent to the developer or any third party.</p>
+    </section>
+
+    <section class="section">
+      <h2>Information stored on your device</h2>
+      <p>The extension saves the following locally in your browser, using localStorage and Chrome extension storage:</p>
+      <ul>
+        <li>Appearance settings (light/dark mode, accent colour, theme)</li>
+        <li>Subject names and links you add</li>
+        <li>A cached copy of the latest timetable banner message</li>
+      </ul>
+      <p>This data stays on your device and is never uploaded. You can remove it at any time by clearing the extension’s data or uninstalling the extension.</p>
+    </section>
+
+    <section class="section">
+      <h2>Network requests</h2>
+      <p>The extension makes read-only requests to:</p>
+      <ul>
+        <li>Cloudflare Workers operated by the developer, to check for announcements, offline notices and timetable banner messages</li>
+        <li>The Chevalier College website, to load the school logo</li>
+      </ul>
+      <p>These requests don’t include your name, login details or any other personal data. As with any web request, the servers receiving them may see standard technical information such as your IP address. Cloudflare may process this under its own privacy policy.</p>
+    </section>
+
+    <section class="section">
+      <h2>What we don’t do</h2>
+      <ul>
+        <li>We don’t collect, store or transmit your login credentials, grades, attendance, payment details or other portal data.</li>
+        <li>We don’t use analytics, tracking, cookies or advertising.</li>
+        <li>We don’t sell or share data with third parties.</li>
+        <li>We don’t execute remotely hosted code. Content from our servers is displayed as plain text only.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Third-party links</h2>
+      <p>The sidebar and subject links may open external sites (for example Canva or links you add yourself). Those sites have their own privacy policies.</p>
+    </section>
+
+    <section class="section">
+      <h2>Children’s privacy</h2>
+      <p>The extension is used by students, but it collects no personal information from anyone.</p>
+    </section>
+
+    <section class="section">
+      <h2>Changes to this policy</h2>
+      <p>If this policy changes, the updated version will be posted at this page with a new “Last updated” date.</p>
+    </section>
+
+    <section class="section">
+      <h2>Contact</h2>
+      <p>Questions or bug reports: <a href="mailto:aw101007@students.chevalier.nsw.edu.au">aw101007@students.chevalier.nsw.edu.au</a>. This extension was made by a student. Extension not for public use.</p>
+    </section>
+
+    <div class="final">
+      <a class="btn" href="https://chevalier-collage.pages.dev/upgrade">Back to Download Guide</a>
+    </div>
+
+    <footer>Student Café+</footer>
+  </main>
+</body>
+</html>

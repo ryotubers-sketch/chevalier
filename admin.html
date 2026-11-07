@@ -102,8 +102,9 @@
   .switch input:checked + .slider { background: var(--accent); border-color: var(--accent-light); }
   .switch input:checked + .slider::before { transform: translateX(24px); background: #fff; }
   .switch input:focus-visible + .slider { box-shadow: 0 0 0 3px rgba(184,81,127,.3); }
-  #switchText { font-family: ui-monospace, Consolas, monospace; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); transition: color .3s; }
+  #switchText, #offSwitchText { font-family: ui-monospace, Consolas, monospace; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); transition: color .3s; }
   #switchText.on { color: var(--accent-light); }
+  #offSwitchText.on { color: var(--red); }
 
   /* type picker */
   .types { display: flex; gap: 12px; margin-top: 6px; }
@@ -171,6 +172,11 @@
   #toast.show { opacity: 1; transform: translate(-50%, 0); }
   #toast.bad { border-color: var(--red); }
 
+  /* offline section */
+  .check-row { display: flex; align-items: center; gap: 10px; margin-top: 18px; cursor: pointer; font-size: .95rem; }
+  .check-row input { width: 18px; height: 18px; accent-color: var(--accent-light); cursor: pointer; }
+  .off-status { font-size: 12px; color: var(--muted); margin-top: 10px; min-height: 18px; font-family: ui-monospace, Consolas, monospace; }
+
   @media (max-width: 520px) {
     .block { padding: 20px; gap: 14px; }
     header { padding: 28px 20px 22px; }
@@ -178,13 +184,6 @@
     .final { padding: 24px 20px; }
   }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-  <style>
-  .check-row { display: flex; align-items: center; gap: 10px; margin-top: 18px; cursor: pointer; font-size: .95rem; }
-  .check-row input { width: 18px; height: 18px; accent-color: var(--accent-light); cursor: pointer; }
-  .off-status { font-size: 12px; color: var(--muted); margin-top: 10px; min-height: 18px; font-family: ui-monospace, Consolas, monospace; }
-  #offSwitchText.on { color: var(--red); }
-</style>
-
 </style>
 </head>
 <body>
@@ -269,33 +268,33 @@
     </div>
 
     <div class="block">
-  <div class="num">05</div>
-  <div>
-    <h2>Offline Mode</h2>
-    <p class="desc">Takes the extension offline for everyone. Students see your message instead of the portal. This is separate from the announcement above and has its own publish button.</p>
- 
-    <div class="switch-row">
-      <label class="switch">
-        <input type="checkbox" id="oStats">
-        <span class="slider"></span>
-      </label>
-      <span id="offSwitchText">Online</span>
+      <div class="num">05</div>
+      <div>
+        <h2>Offline Mode</h2>
+        <p class="desc">Takes the extension offline for everyone. Students see your message instead of the portal. This is separate from the announcement above and has its own publish button.</p>
+
+        <div class="switch-row">
+          <label class="switch">
+            <input type="checkbox" id="oStats">
+            <span class="slider"></span>
+          </label>
+          <span id="offSwitchText">Online</span>
+        </div>
+
+        <label class="cap" for="oMsg">Offline message</label>
+        <textarea id="oMsg" maxlength="500" placeholder="e.g. Student Cafe+ is down for maintenance. Back soon!"></textarea>
+        <div class="count"><span id="oCnt">0</span> / 500</div>
+
+        <label class="check-row">
+          <input type="checkbox" id="oOpenTab">
+          <span>Also open the extension site in a new tab</span>
+        </label>
+
+        <button class="btn" id="oPublishBtn" disabled>Publish offline settings</button>
+        <button class="btn ghost" id="oReloadBtn">Discard &amp; reload</button>
+        <div class="off-status" id="oStatus">Loading...</div>
+      </div>
     </div>
- 
-    <label class="cap" for="oMsg">Offline message</label>
-    <textarea id="oMsg" maxlength="500" placeholder="e.g. Student Cafe+ is down for maintenance. Back soon!"></textarea>
-    <div class="count"><span id="oCnt">0</span> / 500</div>
- 
-    <label class="check-row">
-      <input type="checkbox" id="oOpenTab">
-      <span>Also open the extension site in a new tab</span>
-    </label>
- 
-    <button class="btn" id="oPublishBtn" disabled>Publish offline settings</button>
-    <button class="btn ghost" id="oReloadBtn">Discard &amp; reload</button>
-    <div class="off-status" id="oStatus">Loading...</div>
-  </div>
-</div>
 
     <div class="final">
       <p id="status">Loading...</p>
@@ -323,6 +322,7 @@ const firebaseConfig = {
 };
 
 const WORKER_URL = "https://throbbing-sunset-4c33.ryotubers.workers.dev/";
+const OFFLINE_WORKER_URL = "https://broad-cell-824d.ryotubers.workers.dev/";
 const APPROVED = [
   "ryotubers@gmail.com",
   "aw101007@students.chevalier.nsw.edu.au"
@@ -333,6 +333,8 @@ const $ = id => document.getElementById(id);
 
 let state = { announcement: false, announcetype: 2, announcemsg: "" };
 let dirty = false;
+let off = { stats: 0, msg: "", "open-tab": false };
+let offDirty = false;
 let currentUser = null;
 
 function show(view) {
@@ -348,6 +350,8 @@ function toast(msg, bad = false) {
   clearTimeout(toast._t);
   toast._t = setTimeout(() => t.classList.remove("show"), 2800);
 }
+
+/* ===================== ANNOUNCEMENT ===================== */
 
 function setDirty(v) {
   dirty = v;
@@ -430,42 +434,15 @@ $("publishBtn").onclick = async () => {
   btn.textContent = "Publish changes";
 };
 
-window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+/* ===================== OFFLINE MODE ===================== */
 
-$("googleBtn").onclick = async () => {
-  $("error").textContent = "";
-  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
-  catch (err) { $("error").textContent = err.message; }
-};
-$("signoutBtn").onclick = $("deniedSignout").onclick = () => signOut(auth);
-  
-
-onAuthStateChanged(auth, user => {
-  currentUser = user;
-  if (!user) { $("userBox").style.display = "none"; show("loginView"); return; }
-  $("userBox").style.display = "block";
-  $("userEmail").textContent = user.email;
-  if (APPROVED.includes((user.email || "").toLowerCase())) {
-    show("dashView"); refresh(); load();
-  } else {
-    $("deniedMsg").textContent = `${user.email} isn't on the approved list.`;
-    show("deniedView");
-  }
-});
-
-<script>
-const OFFLINE_WORKER_URL = "https://broad-cell-824d.ryotubers.workers.dev/"; // <-- your new worker URL
- 
-let off = { stats: 0, msg: "", "open-tab": false };
-let offDirty = false;
- 
 function setOffDirty(v) {
   offDirty = v;
   $("oPublishBtn").disabled = !v;
   $("oPublishBtn").classList.toggle("dirty", v);
   $("oStatus").textContent = v ? "You have unpublished offline changes." : "Offline settings are published.";
 }
- 
+
 function offRefresh() {
   const isOff = off.stats === 1;
   $("oStats").checked = isOff;
@@ -475,11 +452,11 @@ function offRefresh() {
   $("oCnt").textContent = off.msg.length;
   $("oOpenTab").checked = off["open-tab"];
 }
- 
+
 $("oStats").onchange = e => { off.stats = e.target.checked ? 1 : 0; setOffDirty(true); offRefresh(); };
 $("oMsg").oninput = e => { off.msg = e.target.value; setOffDirty(true); offRefresh(); };
 $("oOpenTab").onchange = e => { off["open-tab"] = e.target.checked; setOffDirty(true); };
- 
+
 async function loadOff() {
   $("oStatus").textContent = "Loading...";
   try {
@@ -498,12 +475,12 @@ async function loadOff() {
     $("oStatus").textContent = "Load failed.";
   }
 }
- 
+
 $("oReloadBtn").onclick = () => {
   if (offDirty && !confirm("Discard unpublished offline changes?")) return;
   loadOff();
 };
- 
+
 $("oPublishBtn").onclick = async () => {
   const btn = $("oPublishBtn");
   if (off.stats === 1 && !off.msg.trim()) return toast("Write an offline message first.", true);
@@ -529,14 +506,32 @@ $("oPublishBtn").onclick = async () => {
   }
   btn.textContent = "Publish offline settings";
 };
- 
-/* ALSO change this line in your existing onAuthStateChanged:
-     show("dashView"); refresh(); load();
-   to:
-     show("dashView"); refresh(); load(); loadOff();
-   And in the beforeunload handler, change `if (dirty)` to `if (dirty || offDirty)`.
-*/
-</script>
+
+/* ===================== AUTH ===================== */
+
+window.addEventListener("beforeunload", e => {
+  if (dirty || offDirty) { e.preventDefault(); e.returnValue = ""; }
+});
+
+$("googleBtn").onclick = async () => {
+  $("error").textContent = "";
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (err) { $("error").textContent = err.message; }
+};
+$("signoutBtn").onclick = $("deniedSignout").onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  if (!user) { $("userBox").style.display = "none"; show("loginView"); return; }
+  $("userBox").style.display = "block";
+  $("userEmail").textContent = user.email;
+  if (APPROVED.includes((user.email || "").toLowerCase())) {
+    show("dashView"); refresh(); offRefresh(); load(); loadOff();
+  } else {
+    $("deniedMsg").textContent = `${user.email} isn't on the approved list.`;
+    show("deniedView");
+  }
+});
 </script>
 </body>
 </html>
